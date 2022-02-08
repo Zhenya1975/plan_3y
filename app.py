@@ -103,16 +103,21 @@ app.layout = dbc.Container(
 ],
     [
         Input('checklist_level_1', 'value'),
+        Input(ThemeSwitchAIO.ids.switch("theme"), "value"),
         # Input('checklist_eo_class', 'value'),
         # Input('checklist_main_eo_class', 'value'),
         # Input('checklist_level_upper', 'value'),
     ],
 )
-def maintanance(checklist_level_1):
+def maintanance(checklist_level_1, theme_selector):
   maintanance_jobs_df = pd.read_csv('data/maintanance_jobs_df.csv')
   downtime_y = maintanance_jobs_df['dowtime_plan, hours']
   dates_x = maintanance_jobs_df['maintanance_datetime']
-  
+  if theme_selector:
+      graph_template = 'bootstrap'
+  else:
+      graph_template = 'plotly_dark'
+
   # fig = go.Figure([go.Bar(x=dates_x, y=downtime_y)])
   fig = go.Figure()
   fig.add_trace(go.Bar(
@@ -124,7 +129,10 @@ def maintanance(checklist_level_1):
     ))
   fig.update_xaxes(showgrid=True, ticklabelmode="period")
   #fig.update_traces(textposition='auto')
-  fig.update_layout(title_text='Запланированный простой по месяцам, час',)
+  fig.update_layout(
+    title_text='Запланированный простой по месяцам, час',
+    template=graph_template,
+    )
 
   return [fig]
 
