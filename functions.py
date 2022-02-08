@@ -60,14 +60,17 @@ for index, row in maint_job_list.iterrows():
 
   while next_maintanance_datetime < last_day_of_selection:
     temp_dict = {}
-    next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=interval_motohours) + timedelta(hours = plan_downtime)
+    
     temp_dict['maintanance_job_code'] = maintanance_job_code
     temp_dict['eo_code'] = eo_code
     temp_dict['interval_motohours'] = interval_motohours
     temp_dict['dowtime_plan, hours'] = plan_downtime
     temp_dict['maintanance_datetime'] = next_maintanance_datetime
     temp_dict['maintanance_date'] = next_maintanance_datetime.date()
-    maintanance_jobs_result_list.append(temp_dict)
+    
+    if next_maintanance_datetime >= first_day_of_selection:
+      maintanance_jobs_result_list.append(temp_dict)
+    next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=interval_motohours) + timedelta(hours = plan_downtime)
   
 maintanance_jobs_df = pd.DataFrame(maintanance_jobs_result_list)
 maintanance_jobs_df['maintanance_date'] = maintanance_jobs_df['maintanance_date'].astype(str)
