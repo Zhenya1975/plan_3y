@@ -1,6 +1,10 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 import datetime
+import json
+# Opening JSON file
+
+
 
 def settings_tab():
     settings_tab_block = dcc.Tab(
@@ -58,7 +62,22 @@ def settings_tab():
                                 # Allow multiple files to be uploaded
                                 multiple=True
                             ),
-                                                       
+
+                            html.P("В файле 'eo_maintanance_plan_update_start_date' вместо пустых ячеек в поле 'последняя проведенная форма' подставляем дату по умолчанию"),
+                            
+                            
+                            dcc.DatePickerSingle(
+                              id='default_maintanance_start_date_picker',
+                              display_format='DD.MM.YYYY',
+                              # min_date_allowed=date(1995, 8, 5),
+                              # max_date_allowed=date(2017, 9, 19),
+                              first_day_of_week=1,
+                              # initial_visible_month= datetime.date(2022, 12, 31),
+                              # date= default_to_start_date
+                          ),
+                            html.Div(id='output-container-date-picker-single'),
+                            html.P(),
+
                             
                             html.A(dbc.Button("Reload", id="reload", size="sm",
                                        style={'marginBottom': '3px',

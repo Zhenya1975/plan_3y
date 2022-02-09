@@ -58,6 +58,8 @@ tabs_styles = {
     'height': '44px'
 }
 
+
+
 app.layout = dbc.Container(
     dbc.Row(
         [
@@ -141,6 +143,44 @@ def maintanance(checklist_level_1, theme_selector):
 
 
 ########## Настройки################
+## обновляем дефолтную дату начала работ
+# читаем файл с дефолтными значениями
+# Opening JSON file
+with open('default_values.json', 'r') as openfile:
+  # Reading from json file
+  default_values_dict = json.load(openfile)
+
+default_to_start_date = default_values_dict['default_to_start_date']
+#print(type(default_to_start_date))
+default_to_start_date = datetime.datetime.strptime(default_to_start_date, '%Y-%m-%d')
+
+@app.callback([
+    Output('output-container-date-picker-single', 'children'),
+    Output('default_maintanance_start_date_picker', 'date')
+    ],
+    Input('default_maintanance_start_date_picker', 'date'))
+def update_output(date_value):
+    print('date_value', date_value)
+    string_prefix = 'Выбрана дата: '
+    datapicker_value = default_to_start_date.date()
+    text = ""
+    if date_value is not None:
+      default_values_dict['default_to_start_date'] = date_value
+      
+      # записываем в json
+      with open("default_values.json", "w") as jsonFile:
+        json.dump(default_values_dict, jsonFile)
+      date_object = datetime.date.fromisoformat(date_value)
+      date_string = date_object.strftime('%d.%m.%Y')
+      text = string_prefix + date_string
+      datapicker_value = date_value
+    print('datapicker_value', datapicker_value)
+    return text, datapicker_value 
+
+
+
+
+
 @app.callback(
     Output("download_template", "data"),
     Input("btn_download_template", "n_clicks"),
@@ -164,11 +204,17 @@ def parse_contents(contents, filename):
         elif 'xlsx' in filename and "maintanance_job_list_general" in filename:
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
-            df.to_csv('data/maintanance_job_list_general.csv')
+            df.to_csv('data/maintanance_job_list_general.csv', dtype = str)
             # если мы загрузили список с работами, то надо подготовить данные для того чтобы вставить
             # даты начала расчета для ТО-шек
             functions.maintanance_eo_list_start_date_df_prepare()
-        
+        elif 'xlsx' in filename and "eo_maintanance_plan_update_start_date" in filename:
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+            values = {"last_maintanance_date": 0, "B": 1, "C": 2, "D": 3}
+            df.fillna(value=values)
+            df.to_csv('data/eo_maintanance_plan_update_start_date_df.csv', dtype = str)
+            functions.eo_maintanance_plan_update_start_date_prepare()
             
     except Exception as e:
         print(e)
@@ -210,7 +256,7 @@ def parse_contents(contents, filename):
               Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
               )
-def update_output(list_of_contents, list_of_names):
+def update_output_(list_of_contents, list_of_names):
     if list_of_contents is not None:
         children = [
             parse_contents(c, n) for c, n in zip(list_of_contents, list_of_names)]
