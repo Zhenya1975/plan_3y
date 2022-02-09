@@ -3,6 +3,27 @@ from datetime import timedelta
 import datetime
 
 
+full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
+
+def maintanance_eo_list_start_date_df_prepare():
+  """ maintanance_eo_list_df - записи о работах, проводимых на машинах в соответствии с регламентом """
+  # Джойним список машин из full_eo_list c планом ТО из maintanance_job_list_general
+  maintanance_job_list_general_df = pd.read_csv('data/maintanance_job_list_general.csv', dtype = str)
+  maintanance_job_list_general_df.rename(columns={'upper_level_tehmesto_code': 'level_upper'}, inplace=True)
+  
+  eo_maintanance_plan_df = pd.merge(full_eo_list, maintanance_job_list_general_df, on = 'level_upper', how='inner')
+  # удаляем строки, в которых нет данных в колонке eo_main_class_code
+  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[eo_maintanance_plan_df['eo_main_class_code'] != 'no_data']
+
+  # для того чтобы можно было заполнить таблицу с датами проведения работ, нужнно получить даты, с которых будем стартовать.
+  # оттдаем на выгрузку эксель для ввода дат
+  eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code']
+  eo_maintanance_plan_update_start_date_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code', 'eo_description', 'maintanance_name', 'interval_motohours']]
+  eo_maintanance_plan_update_start_date_df['last_maintanance_date'] = ''
+  eo_maintanance_plan_update_start_date_df.to_csv('data/eo_maintanance_plan_update_start_date_df.csv', index=False)
+  return eo_maintanance_plan_update_start_date_df
+
+
 """датафрейм с протянутыми датами"""
 
 # даты начала и конца трехлетнего периода
@@ -32,7 +53,7 @@ maintanence_chart_df = pd.concat([eo_list, plan_df], axis=1)
 
 maintanence_chart_df.to_csv('data/maintanence_chart.csv')
 
-# создаем записи о работах
+# создаем записи о работах в таблицу 
 last_day_of_selection = pd.to_datetime('01.01.2026', format='%d.%m.%Y')
 
 maint_job_list = pd.read_csv('data/maintanance_job_list.csv')

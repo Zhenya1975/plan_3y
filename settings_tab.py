@@ -23,6 +23,18 @@ def settings_tab():
                             dcc.Download(id="download_maintanance_job_list_general")
                         ]),
 
+                        html.Div([
+                            html.P(),
+                            
+                            html.P(),
+                            dbc.Button("Выгрузить eo_maintanance_plan_update_start_date_df.xlsx", id="btn_download_eo_maintanance_plan_update_start_date_df", size="sm",
+                                       style={'marginBottom': '3px',
+                                              'marginTop': '3px',
+                                              'backgroundColor': '#232632'}, ),
+                            dcc.Download(id="download_eo_maintanance_plan_update_start_date_df")
+                        ]),
+
+
                         html.P(),
                         
 
@@ -46,6 +58,13 @@ def settings_tab():
                                 # Allow multiple files to be uploaded
                                 multiple=True
                             ),
+                                                       
+                            
+                            html.A(dbc.Button("Reload", id="reload", size="sm",
+                                       style={'marginBottom': '3px',
+                                              'marginTop': '3px',
+                                              'backgroundColor': '#232632'}, ),href='/'),
+                            html.Hr(),                  
                             html.Div(id='output-data-upload'),
                         ]),
 

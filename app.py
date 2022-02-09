@@ -64,7 +64,9 @@ app.layout = dbc.Container(
             dbc.Col(
                 [
                     html.H4("КТГ 2023-2025"),
-                    ThemeSwitchAIO(aio_id="theme", themes=[url_theme1, url_theme2], ),
+                    ThemeSwitchAIO(
+                      aio_id="theme", themes=[url_theme1, url_theme2],
+                    ),
 
                     html.Div([
                         dcc.Tabs(
@@ -96,6 +98,7 @@ app.layout = dbc.Container(
     className="m-4 dbc",
     # fluid=True,
 )
+
 
 
 @app.callback([
@@ -162,6 +165,9 @@ def parse_contents(contents, filename):
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
             df.to_csv('data/maintanance_job_list_general.csv')
+            # если мы загрузили список с работами, то надо подготовить данные для того чтобы вставить
+            # даты начала расчета для ТО-шек
+            functions.maintanance_eo_list_start_date_df_prepare()
         
             
     except Exception as e:
@@ -212,8 +218,30 @@ def update_output(list_of_contents, list_of_names):
         return children
 
 
+# обработчик выгрузки "Выгрузить maintanance_job_list_general"
+@app.callback(
+    Output("download_maintanance_job_list_general", "data"),
+    Input("btn_download_maintanance_job_list_general", "n_clicks"),
+    prevent_initial_call=True,
+)
+def download_maintanance_job_list_general(n_clicks):
+    if n_clicks:
+      df = pd.read_csv('data/maintanance_job_list_general.csv', dtype=str)
+      # df = df.astype({'level_no': int})
+      return dcc.send_data_frame(df.to_excel, "maintanance_job_list_general.xlsx", index=False, sheet_name="maintanance_job_list_general")
 
 
+# обработчик выгрузки "Выгрузить eo_maintanance_plan_update_start_date_df"
+@app.callback(
+    Output("download_eo_maintanance_plan_update_start_date_df", "data"),
+    Input("btn_download_eo_maintanance_plan_update_start_date_df", "n_clicks"),
+    prevent_initial_call=True,
+)
+def download_eo_maintanance_plan_update_start_date_df(n_clicks):
+    if n_clicks:
+      df = pd.read_csv('data/eo_maintanance_plan_update_start_date_df.csv', dtype=str)
+      # df = df.astype({'level_no': int})
+      return dcc.send_data_frame(df.to_excel, "eo_maintanance_plan_update_start_date_df.xlsx", index=False, sheet_name="update_start_date_df")
 
 if __name__ == "__main__":
     # app.run_server(debug=True)
