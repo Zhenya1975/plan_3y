@@ -9,7 +9,7 @@ import functions
 
 
 import maintanance_chart_tab
-# import settings_tab
+import settings_tab
 
 from dash import dash_table
 import base64
@@ -70,9 +70,9 @@ app.layout = dbc.Container(
                         dcc.Tabs(
                             id="tabs-all",
                             style={
-                                'width': '50%',
+                                # 'width': '50%',
                                 # 'font-size': '200%',
-                                'height':'5vh'
+                                'height':'10vh'
                             },
                             value='ktg',
                             # parent_className='custom-tabs',
@@ -81,7 +81,7 @@ app.layout = dbc.Container(
                                 maintanance_chart_tab.maintanance_chart_tab(),
                                 # messages_orders_tab.messages_orders_tab(),
                                 # orders_moved_tab.orders_moved_tab(),
-                                # settings_tab.settings_tab()
+                                settings_tab.settings_tab()
 
                                 # tab2(),
                                 # tab3(),
@@ -135,6 +135,85 @@ def maintanance(checklist_level_1, theme_selector):
     )
 
   return [fig]
+
+
+########## Настройки################
+@app.callback(
+    Output("download_template", "data"),
+    Input("btn_download_template", "n_clicks"),
+    prevent_initial_call=True,
+)
+def func_1(n_clicks):
+    if n_clicks:
+        df = pd.read_csv('data/selected_items.csv', dtype=str)
+        df = df.astype({'level_no': int})
+        return dcc.send_data_frame(df.to_excel, "шаблон фильтров.xlsx", index=False, sheet_name="шаблон фильтров")
+
+
+def parse_contents(contents, filename):
+    content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+    
+    try:
+        if 'csv' in filename:
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+        elif 'xlsx' in filename and "maintanance_job_list_general" in filename:
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+            df.to_csv('data/maintanance_job_list_general.csv')
+        
+            
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+
+    return html.Div([
+        html.H5(filename),
+
+
+        dash_table.DataTable(
+            data=df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in df.columns],
+            filter_action='native',
+            style_header={
+                # 'backgroundColor': 'white',
+                'fontWeight': 'bold'
+            },
+            style_data={
+                'whiteSpace': 'normal',
+                'height': 'auto',
+            },
+            style_cell={'textAlign': 'left'},
+
+        ),
+
+        html.Hr(),  # horizontal line
+
+        # For debugging, display the raw contents provided by the web browser
+        # html.Div('Raw Content'),
+        # html.Pre(contents[0:200] + '...', style={
+        #     'whiteSpace': 'pre-wrap',
+        #     'wordBreak': 'break-all'
+        # })
+    ])
+
+@app.callback(Output('output-data-upload', 'children'),
+              Input('upload-data', 'contents'),
+              State('upload-data', 'filename'),
+              )
+def update_output(list_of_contents, list_of_names):
+    if list_of_contents is not None:
+        children = [
+            parse_contents(c, n) for c, n in zip(list_of_contents, list_of_names)]
+        
+        return children
+
+
+
+
 
 if __name__ == "__main__":
     # app.run_server(debug=True)
