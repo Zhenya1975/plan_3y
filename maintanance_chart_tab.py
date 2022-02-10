@@ -78,6 +78,9 @@ def maintanance_chart_tab():
                        html.Hr(),
                        html.P(),
                        dcc.Graph(id='ktg_by_month', config={'displayModeBar': False}),
+                       html.Hr(),
+                       html.P(),
+                       dcc.Graph(id='ktg_by_weeks', config={'displayModeBar': False}),
                     ]),
                 
             ]),
