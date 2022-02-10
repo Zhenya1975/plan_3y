@@ -10,6 +10,7 @@ import functions
 
 import maintanance_chart_tab
 import settings_tab
+import initial_values
 
 from dash import dash_table
 import base64
@@ -24,6 +25,9 @@ template_theme2 = "darkly"
 # url_theme1 = dbc.themes.SKETCHY
 url_theme1 = dbc.themes.FLATLY
 url_theme2 = dbc.themes.DARKLY
+
+first_day_of_selection = initial_values.first_day_of_selection
+last_day_of_selection = initial_values.last_day_of_selection
 
 
 loading_style = {
@@ -116,6 +120,9 @@ app.layout = dbc.Container(
 )
 def maintanance(checklist_level_1, theme_selector):
   maintanance_jobs_df = pd.read_csv('data/maintanance_jobs_df.csv')
+  maintanance_jobs_df['maintanance_datetime']= pd.to_datetime(maintanance_jobs_df['maintanance_datetime'])
+  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['maintanance_datetime'] >= first_day_of_selection]
+
   downtime_y = maintanance_jobs_df['dowtime_plan, hours']
   dates_x = maintanance_jobs_df['maintanance_datetime']
   if theme_selector:
@@ -160,7 +167,7 @@ default_to_start_date = datetime.datetime.strptime(default_to_start_date, '%Y-%m
     ],
     Input('default_maintanance_start_date_picker', 'date'))
 def update_output(date_value):
-    print('date_value', date_value)
+    
     string_prefix = 'Выбрана дата: '
     datapicker_value = default_to_start_date.date()
     text = ""
@@ -174,7 +181,7 @@ def update_output(date_value):
       date_string = date_object.strftime('%d.%m.%Y')
       text = string_prefix + date_string
       datapicker_value = date_value
-    print('datapicker_value', datapicker_value)
+    
     return text, datapicker_value 
 
 
@@ -196,7 +203,7 @@ def func_1(n_clicks):
 def parse_contents(contents, filename):
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
-    
+    print('filename: ', filename)
     try:
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
@@ -204,17 +211,20 @@ def parse_contents(contents, filename):
         elif 'xlsx' in filename and "maintanance_job_list_general" in filename:
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
-            df.to_csv('data/maintanance_job_list_general.csv', dtype = str)
+            df.to_csv('data/maintanance_job_list_general.csv')
             # если мы загрузили список с работами, то надо подготовить данные для того чтобы вставить
             # даты начала расчета для ТО-шек
             functions.maintanance_eo_list_start_date_df_prepare()
         elif 'xlsx' in filename and "eo_maintanance_plan_update_start_date" in filename:
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
-            values = {"last_maintanance_date": 0, "B": 1, "C": 2, "D": 3}
-            df.fillna(value=values)
-            df.to_csv('data/eo_maintanance_plan_update_start_date_df.csv', dtype = str)
-            functions.eo_maintanance_plan_update_start_date_prepare()
+            # values = {"last_maintanance_date": default_to_start_date.date()}
+            # print('default_to_start_date: ', default_to_start_date)
+            #print(df.loc[df['last_maintanance_date']])
+            #df.fillna(value=values)
+            
+            df.to_csv('data/eo_maintanance_plan_with_start_date_df.csv')
+            
             
     except Exception as e:
         print(e)
@@ -285,7 +295,7 @@ def download_maintanance_job_list_general(n_clicks):
 )
 def download_eo_maintanance_plan_update_start_date_df(n_clicks):
     if n_clicks:
-      df = pd.read_csv('data/eo_maintanance_plan_update_start_date_df.csv', dtype=str)
+      df = pd.read_csv('data/eo_maintanance_plan_with_start_date_df.csv', dtype=str)
       # df = df.astype({'level_no': int})
       return dcc.send_data_frame(df.to_excel, "eo_maintanance_plan_update_start_date_df.xlsx", index=False, sheet_name="update_start_date_df")
 
