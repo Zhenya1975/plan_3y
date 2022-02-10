@@ -139,6 +139,11 @@ def maintanance(checklist_level_1, theme_selector):
     # xperiodalignment="middle",
     textposition='auto'
     ))
+  new_year_2022_2023 = pd.to_datetime('01.01.2024', format='%d.%m.%Y')
+  new_year_2023_2024 = pd.to_datetime('01.01.2025', format='%d.%m.%Y')
+  fig.add_vline(x=new_year_2022_2023, line_width=3, line_color="green")
+  fig.add_vline(x=new_year_2023_2024, line_width=3, line_color="green")
+
   fig.update_xaxes(showgrid=True, ticklabelmode="period")
   #fig.update_traces(textposition='auto')
   fig.update_layout(

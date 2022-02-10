@@ -97,8 +97,40 @@ def eo_maintanance_plan_df_phase_2():
 
   maintanance_jobs_df.to_csv('data/maintanance_jobs_df.csv')
 
-eo_maintanance_plan_df_phase_2()
+# eo_maintanance_plan_df_phase_2()
  
+
+# заполняем календарный фонд по оборудованию
+# берем машины, кооторые участвуют в файле eo_maintanance_plan_with_start_date_df.csv
+def fill_calendar_fond():
+  eo_list_under_maintanance_program = pd.read_csv('data/eo_maintanance_plan_with_start_date_df.csv', dtype = str)
+  # new data frame with split value columns
+  new = eo_list_under_maintanance_program['eo_code'].str.split(".", n = 1, expand = True)
+  # making separate first name column from new data frame
+  eo_list_under_maintanance_program["eo_code"]= new[0]
+  
+  eo_list = eo_list_under_maintanance_program['eo_code'].unique()
+  
+  first_day_of_selection
+  result_list = []
+  # итерируемся по списку еo
+  for eo in eo_list:
+    maint_date = first_day_of_selection
+    while maint_date < last_day_of_selection:
+      temp_dict = {}
+      temp_dict['eo'] = eo
+      temp_dict['datetime'] = maint_date
+      temp_dict['calendar_fond'] = 24 
+      result_list.append(temp_dict)
+      maint_date = maint_date + timedelta(hours=24)
+
+  eo_calendar_fond = pd.DataFrame(result_list)
+  eo_calendar_fond.to_csv('data/eo_calendar_fond.csv')
+  # print(eo_list)
+fill_calendar_fond()
+
+
+
 
 # нужно заджойнить запланированный список работ maintanance_jobs_df и матрицу с датами
 #maintanance_job_list = pd.read_csv('data/maintanance_job_list.csv')
