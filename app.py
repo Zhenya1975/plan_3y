@@ -44,6 +44,7 @@ templates = [
     "cyborg",
     "darkly",
     "vapor",
+    "sandstone"
 ]
 
 load_figure_template(templates)
@@ -121,14 +122,41 @@ app.layout = dbc.Container(
     ],
 )
 def maintanance(checklist_level_1, theme_selector):
-  maintanance_jobs_df = pd.read_csv('data/maintanance_jobs_df.csv')
+  # читаем список работ с простоями
+  maintanance_jobs_df = pd.read_csv('data/maintanance_jobs_df.csv', dtype = str)
+  maintanance_jobs_df = maintanance_jobs_df.astype({'dowtime_plan, hours': float})
+  # поле даты - в datetime
   maintanance_jobs_df['maintanance_datetime']= pd.to_datetime(maintanance_jobs_df['maintanance_datetime'])
+  # режем выборку с начала периода отчета
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['maintanance_datetime'] >= first_day_of_selection]
+  
+  # читаем календарный фонд
+  eo_calendar_fond = pd.read_csv('data/eo_calendar_fond.csv', dtype = str)
+  eo_calendar_fond = eo_calendar_fond.astype({'calendar_fond': float})
+  # поле даты - в datetime
+  eo_calendar_fond['datetime'] = pd.to_datetime(eo_calendar_fond['datetime'])
+  # full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
+  
+  # список ЕО, на которые есть календарный фонд
+  eo_cal_fond = pd.DataFrame(eo_calendar_fond['eo_code'].unique(), columns = ['eo_code'])
+  # список ЕО, на которые есть расчет простоев
+  eo_downtime = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'])
+  # делаем пересечение этих списков.
+  eo_for_ktg = pd.merge(eo_cal_fond, eo_downtime, on = 'eo_code', how = 'inner')['eo_code'].unique()
+  # режем датафрейм с простоями по eo_for_ktg
+  maintanance_jobs_df = maintanance_jobs_df.copy()
+  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
+  # режем датафрейм с календарным фондом  по eo_for_ktg
+  maintanance_jobs_df = maintanance_jobs_df.copy()
+  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
+
 
   downtime_y = maintanance_jobs_df['dowtime_plan, hours']
   dates_x = maintanance_jobs_df['maintanance_datetime']
   if theme_selector:
-      graph_template = 'bootstrap'
+      graph_template = 'sandstone'
+  # bootstrap
+
   else:
       graph_template = 'plotly_dark'
 
@@ -155,29 +183,37 @@ def maintanance(checklist_level_1, theme_selector):
 
   ################# Строим график КТГ по годам ###############################
   maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
+  eo_calendar_fond['year'] = eo_calendar_fond['datetime'].dt.year
   # maintanance_jobs_df['year'].astype('str')
-  x_years = ['2023', '2024', '2025']
+  # x_years = ['2023', '2024', '2025']
   x_years = [2023, 2024, 2025]
-  y_downtime = []
+  y_ktg = []
   for year in x_years:
     downtime_year_df = maintanance_jobs_df.loc[maintanance_jobs_df['year']==year]
     downtime_year = downtime_year_df['dowtime_plan, hours'].sum()
-    y_downtime.append(downtime_year)
+    calendar_fond_year_df = eo_calendar_fond.loc[eo_calendar_fond['year'] == year]
+    calendar_fond = calendar_fond_year_df['calendar_fond'].sum()
+    ktg_year = (calendar_fond - downtime_year) / calendar_fond
+    
+    y_ktg.append(ktg_year)
   
   fig_ktg_by_years = go.Figure()
   fig_ktg_by_years.add_trace(go.Bar(
-    name="Простои",
+    name="КТГ",
     x=x_years, 
-    y=y_downtime,
-    
+    y=y_ktg,
     # xperiodalignment="middle",
     textposition='auto'
     ))
-  fig_ktg_by_years.update_xaxes(type='category')  
+  fig_ktg_by_years.update_xaxes(type='category')
+  fig_ktg_by_years.update_yaxes(range = [0,1])  
   fig_ktg_by_years.update_layout(
     title_text='КТГ, %',
     template=graph_template,
     )
+  fig_ktg_by_years.update_traces(
+    textposition='outside'
+  )
 
 
   return fig_downtime, fig_ktg_by_years

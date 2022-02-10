@@ -118,7 +118,7 @@ def fill_calendar_fond():
     maint_date = first_day_of_selection
     while maint_date < last_day_of_selection:
       temp_dict = {}
-      temp_dict['eo'] = eo
+      temp_dict['eo_code'] = eo
       temp_dict['datetime'] = maint_date
       temp_dict['calendar_fond'] = 24 
       result_list.append(temp_dict)
