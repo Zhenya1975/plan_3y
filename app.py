@@ -106,9 +106,11 @@ app.layout = dbc.Container(
 )
 
 
-
+######################### ОСНОВНОЙ ОБРАБОТЧИК ДЛЯ ПОСТРОЕНИЯ ГРАФИКОВ ##############################
 @app.callback([
     Output('planned_downtime', 'figure'),
+    Output('ktg_by_years', 'figure'),
+
 ],
     [
         Input('checklist_level_1', 'value'),
@@ -131,8 +133,8 @@ def maintanance(checklist_level_1, theme_selector):
       graph_template = 'plotly_dark'
 
   # fig = go.Figure([go.Bar(x=dates_x, y=downtime_y)])
-  fig = go.Figure()
-  fig.add_trace(go.Bar(
+  fig_downtime = go.Figure()
+  fig_downtime.add_trace(go.Bar(
     name="Простои",
     x=dates_x, y=downtime_y,
     xperiod="M1",
@@ -141,17 +143,44 @@ def maintanance(checklist_level_1, theme_selector):
     ))
   new_year_2022_2023 = pd.to_datetime('01.01.2024', format='%d.%m.%Y')
   new_year_2023_2024 = pd.to_datetime('01.01.2025', format='%d.%m.%Y')
-  fig.add_vline(x=new_year_2022_2023, line_width=3, line_color="green")
-  fig.add_vline(x=new_year_2023_2024, line_width=3, line_color="green")
+  fig_downtime.add_vline(x=new_year_2022_2023, line_width=3, line_color="green")
+  fig_downtime.add_vline(x=new_year_2023_2024, line_width=3, line_color="green")
 
-  fig.update_xaxes(showgrid=True, ticklabelmode="period")
+  fig_downtime.update_xaxes(showgrid=True, ticklabelmode="period")
   #fig.update_traces(textposition='auto')
-  fig.update_layout(
+  fig_downtime.update_layout(
     title_text='Запланированный простой по месяцам, час',
     template=graph_template,
     )
 
-  return [fig]
+  ################# Строим график КТГ по годам ###############################
+  maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
+  # maintanance_jobs_df['year'].astype('str')
+  x_years = ['2023', '2024', '2025']
+  x_years = [2023, 2024, 2025]
+  y_downtime = []
+  for year in x_years:
+    downtime_year_df = maintanance_jobs_df.loc[maintanance_jobs_df['year']==year]
+    downtime_year = downtime_year_df['dowtime_plan, hours'].sum()
+    y_downtime.append(downtime_year)
+  
+  fig_ktg_by_years = go.Figure()
+  fig_ktg_by_years.add_trace(go.Bar(
+    name="Простои",
+    x=x_years, 
+    y=y_downtime,
+    
+    # xperiodalignment="middle",
+    textposition='auto'
+    ))
+  fig_ktg_by_years.update_xaxes(type='category')  
+  fig_ktg_by_years.update_layout(
+    title_text='КТГ, %',
+    template=graph_template,
+    )
+
+
+  return fig_downtime, fig_ktg_by_years
 
 
 ########## Настройки################

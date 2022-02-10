@@ -72,6 +72,8 @@ def maintanance_chart_tab():
                     children=[
                        html.P(),
                        dcc.Graph(id='planned_downtime', config={'displayModeBar': False}),
+                       html.P(),
+                       dcc.Graph(id='ktg_by_years', config={'displayModeBar': False}),
                     ]),
                 
             ]),
