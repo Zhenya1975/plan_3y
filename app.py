@@ -397,10 +397,12 @@ def parse_contents(contents, filename):
             # print('default_to_start_date: ', default_to_start_date)
             #print(df.loc[df['last_maintanance_date']])
             #df.fillna(value=values)
-            df.to_csv('data/df_delete.csv')
-            print(df.info())
+            # df.to_csv('data/df_delete.csv')
+            # print(df.info())
             updated_eo_maintanance_job_code_last_date = df.loc[:, ['eo_maintanance_job_code', 'last_maintanance_date']]
-            
+            functions.maintanance_jobs_df_prepare()
+            functions.fill_calendar_fond()
+            functions.maintanance_matrix()
         
             updated_eo_maintanance_job_code_last_date.to_csv('data/eo_maintanance_job_code_last_date.csv')
             
