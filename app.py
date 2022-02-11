@@ -209,7 +209,7 @@ def maintanance(checklist_level_1, theme_selector):
     textposition='auto'
     ))
   fig_ktg_by_years.update_xaxes(type='category')
-  fig_ktg_by_years.update_yaxes(range = [0,1])  
+  fig_ktg_by_years.update_yaxes(range = [0.5,1])  
   fig_ktg_by_years.update_layout(
     
     title_text='КТГ по годам за три года 2023-2025',

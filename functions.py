@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import timedelta
 import datetime
-
+import initial_values
 
 full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
 full_eo_list['avearage_day_operation_hours'] = 23.5
@@ -20,8 +20,8 @@ def maintanance_eo_list_start_date_df_prepare():
   # удаляем строки, в которых нет данных в колонке eo_main_class_code
   eo_maintanance_plan_df = eo_maintanance_plan_df.loc[eo_maintanance_plan_df['eo_main_class_code'] != 'no_data']
 
-  # для того чтобы можно было заполнить таблицу с датами проведения работ, нужнно получить даты, с которых будем стартовать.
-  # оттдаем на выгрузку эксель для ввода дат
+  # для того чтобы можно было заполнить таблицу с датами проведения работ, нужно получить даты, с которых будем стартовать.
+  # отдаем на выгрузку эксель для ввода дат
   eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code']
   # eo_maintanance_plan_df.to_csv('data/eo_maintanance_plan_df_delete.csv')
   eo_maintanance_plan_update_start_date_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','eo_code', 'eo_description', 'maintanance_name', 'interval_motohours', 'dowtime_plan, hours', 'avearage_day_operation_hours']]
@@ -96,7 +96,7 @@ def eo_maintanance_plan_df_phase_2():
   # maintanance_jobs_df['maintanance_date'] = maintanance_jobs_df['maintanance_date'].astype(str)
 
   maintanance_jobs_df.to_csv('data/maintanance_jobs_df.csv')
-
+  return maintanance_jobs_df
 # eo_maintanance_plan_df_phase_2()
  
 
@@ -127,9 +127,96 @@ def fill_calendar_fond():
   eo_calendar_fond = pd.DataFrame(result_list)
   eo_calendar_fond.to_csv('data/eo_calendar_fond.csv')
   # print(eo_list)
-fill_calendar_fond()
+# fill_calendar_fond()
 
 
+# матрица по датам 
+# EO - тип работы  - и вправо в даты суммируем простои по дням.
+# затем джойнами доплним данные о машине и работах
+def maintanance_matrix():
+  maintanance_jobs_df = eo_maintanance_plan_df_phase_2()
+  # заполняем колонки датами
+  # итерируемся по maintanance_jobs_df
+  matrix_result_list = []
+  for index, row in maintanance_jobs_df.iterrows():
+    eo_code = row['eo_code']
+    maintanance_job_code = row['maintanance_job_code']
+    maintanance_date = row['maintanance_date']
+    
+
+  
+  first_day_of_selection = initial_values.first_day_of_selection
+  last_day_of_selection_date = initial_values.last_day_of_selection
+
+  
+  calendar_date = first_day_of_selection
+  date_list = []
+  month_list = []
+  year_list = []
+  while calendar_date < last_day_of_selection_date:
+    date_cal = calendar_date.date()
+    month_cal = calendar_date.month
+    year_cal = calendar_date.year
+    date_list.append(date_cal)
+    month_list.append(month_cal)
+    year_list.append(year_cal) 
+    calendar_date = calendar_date + timedelta(hours=24)
+  matrix_df = pd.DataFrame(columns = date_list).fillna(0)
+  
+  # new_df = pd.concat([maintanance_jobs_df, matrix_df], axis=1).fillna(0)
+ 
+
+  
+
+def maintanance_matrix():
+  maintanance_jobs_df = eo_maintanance_plan_df_phase_2()
+  # print(maintanance_jobs_df.info())
+  first_date = first_day_of_selection.date()
+  last_date = last_day_of_selection.date()
+  date_list = []
+  current_date = first_date
+  while current_date <= last_date:
+    date_list.append(current_date)
+    current_date = current_date + timedelta(hours=24)
+  
+  eo_maint_unique_list = maintanance_jobs_df['maintanance_job_code'].unique()
+  
+  matrix_df = pd.DataFrame(index = eo_maint_unique_list, columns = date_list).fillna(0)
+  # удаляем из maintanance_jobs_df записи раньше 2023 года
+  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['maintanance_datetime'] >= first_day_of_selection]
+  for maintanance_job_code, row in matrix_df.iterrows():
+    # режем таблицу со списком по текущему индексу, который есть работах
+    temp_df = maintanance_jobs_df.loc[maintanance_jobs_df['maintanance_job_code'] == maintanance_job_code]
+    for index_temp_df, row_temp_df in temp_df.iterrows():
+      temp_date = row_temp_df['maintanance_date']
+      downtime = row_temp_df['dowtime_plan, hours']
+      matrix_df.loc[maintanance_job_code, temp_date] = downtime 
+
+
+
+  matrix_df.to_csv('data/matrix_df.csv')
+
+  # result_list = []
+  #for index, row in maintanance_jobs_df.iterrows():
+  #  maintanance_job_code = row['maintanance_job_code']
+  #  eo_code = row['eo_code']
+  #  dowtime_plan = row['dowtime_plan, hours']
+  #  interval_motohours = row['interval_motohours']
+  #  maintanance_datetime = row['maintanance_datetime']
+  #  maintanance_date = row['maintanance_date']
+  #  maintanance_name = row['maintanance_name']
+  #  temp_dict = {}
+  #  temp_dict['maintanance_job_code'] = maintanance_job_code
+    # maintanance_jobs_df = maintanance_jobs_df.copy()
+    # maintanance_jobs_df.loc[index, maintanance_date] = dowtime_plan
+    # result_list.append(temp_dict)
+  
+  # df = pd.DataFrame(result_list)
+  # df.to_csv('data/df.csv')
+
+
+
+maintanance_matrix()
 
 
 # нужно заджойнить запланированный список работ maintanance_jobs_df и матрицу с датами
