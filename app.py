@@ -382,20 +382,27 @@ def parse_contents(contents, filename):
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
         elif 'xlsx' in filename and "maintanance_job_list_general" in filename:
             # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
-            df.to_csv('data/maintanance_job_list_general.csv')
+            df = pd.read_excel(io.BytesIO(decoded),decimal=',')
+            maintanance_job_list_general_df = functions.check_maintanance_job_list_general_file(df)
+            functions.eo_job_catologue()
+            maintanance_job_list_general_df.to_csv('data/maintanance_job_list_general.csv')
             # если мы загрузили список с работами, то надо подготовить данные для того чтобы вставить
             # даты начала расчета для ТО-шек
-            functions.maintanance_eo_list_start_date_df_prepare()
-        elif 'xlsx' in filename and "eo_maintanance_plan_update_start_date" in filename:
+            # functions.maintanance_eo_list_start_date_df_prepare()
+
+        elif 'xlsx' in filename and "eo_job_catologue" in filename:
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
             # values = {"last_maintanance_date": default_to_start_date.date()}
             # print('default_to_start_date: ', default_to_start_date)
             #print(df.loc[df['last_maintanance_date']])
             #df.fillna(value=values)
+            df.to_csv('data/df_delete.csv')
+            print(df.info())
+            updated_eo_maintanance_job_code_last_date = df.loc[:, ['eo_maintanance_job_code', 'last_maintanance_date']]
             
-            df.to_csv('data/eo_maintanance_plan_with_start_date_df.csv')
+        
+            updated_eo_maintanance_job_code_last_date.to_csv('data/eo_maintanance_job_code_last_date.csv')
             
             
     except Exception as e:
@@ -455,21 +462,25 @@ def update_output_(list_of_contents, list_of_names):
 def download_maintanance_job_list_general(n_clicks):
     if n_clicks:
       df = pd.read_csv('data/maintanance_job_list_general.csv', dtype=str)
-      # df = df.astype({'level_no': int})
+      df = df.loc[:, ['maintanance_code_id', 'maintanance_code',	'maintanance_name',	'upper_level_tehmesto_code',	'upper_level_tehmesto_description',	'interval_motohours',	'downtime_planned',	'source']]
+
+      df = df.astype({'downtime_planned': float, 'interval_motohours': float})
       return dcc.send_data_frame(df.to_excel, "maintanance_job_list_general.xlsx", index=False, sheet_name="maintanance_job_list_general")
 
 
-# обработчик выгрузки "Выгрузить eo_maintanance_plan_update_start_date_df"
+# обработчик выгрузки "Выгрузить eo_job_catologue"
 @app.callback(
-    Output("download_eo_maintanance_plan_update_start_date_df", "data"),
-    Input("btn_download_eo_maintanance_plan_update_start_date_df", "n_clicks"),
+    Output("download_eo_job_catologue", "data"),
+    Input("btn_download_eo_job_catologue", "n_clicks"),
     prevent_initial_call=True,
 )
-def download_eo_maintanance_plan_update_start_date_df(n_clicks):
+def download_eo_job_catologue(n_clicks):
     if n_clicks:
-      df = pd.read_csv('data/eo_maintanance_plan_with_start_date_df.csv', dtype=str)
+      df_catalogue = pd.read_csv('data/eo_job_catologue.csv', dtype=str)
+      df_dates = pd.read_csv('data/eo_maintanance_job_code_last_date.csv', dtype = str)
+      df = pd.merge(df_catalogue, df_dates, on = 'eo_maintanance_job_code', how = 'left')
       # df = df.astype({'level_no': int})
-      return dcc.send_data_frame(df.to_excel, "eo_maintanance_plan_update_start_date_df.xlsx", index=False, sheet_name="update_start_date_df")
+      return dcc.send_data_frame(df.to_excel, "eo_job_catologue.xlsx", index=False, sheet_name="eo_job_catologue")
 
 if __name__ == "__main__":
     # app.run_server(debug=True)

@@ -31,11 +31,11 @@ def settings_tab():
                             html.P(),
                             
                             html.P(),
-                            dbc.Button("Выгрузить eo_maintanance_plan_update_start_date_df.xlsx", id="btn_download_eo_maintanance_plan_update_start_date_df", size="sm",
+                            dbc.Button("Выгрузить eo_job_catologue.xlsx", id="btn_download_eo_job_catologue", size="sm",
                                        style={'marginBottom': '3px',
                                               'marginTop': '3px',
                                               'backgroundColor': '#232632'}, ),
-                            dcc.Download(id="download_eo_maintanance_plan_update_start_date_df")
+                            dcc.Download(id="download_eo_job_catologue")
                         ]),
 
 

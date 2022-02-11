@@ -10,25 +10,52 @@ first_day_of_selection = pd.to_datetime('01.01.2023', format='%d.%m.%Y')
 last_day_of_selection = pd.to_datetime('01.01.2026', format='%d.%m.%Y')
 
 
-def maintanance_eo_list_start_date_df_prepare():
-  """ maintanance_eo_list_df - записи о работах, проводимых на машинах в соответствии с регламентом """
+# при получении внешнего excel maintanance_job_list_general проверяем - есть ли в полученном файле ноые записи.
+# Если есть, то обновляем файл
+def check_maintanance_job_list_general_file(df):
+  # сначала получаем то, что у нас уже сохранено.
+  maintanance_job_list_general_old = pd.read_csv('data/maintanance_job_list_general.csv', dtype = str)
+  maintanance_job_list_general_old = maintanance_job_list_general_old.astype({'downtime_planned': float})
+
+  # получаем новый файл
+  maintanance_job_list_general_new = df.astype({'downtime_planned': float})
+
+  # maintanance_job_list_general_new.to_csv('data/maintanance_job_list_general_new_delete.csv')
+
+  maintanance_job_list_general_updated = maintanance_job_list_general_new
+  return maintanance_job_list_general_updated
+
+
+# справочник работ eo_job_catologue
+def eo_job_catologue():
   # Джойним список машин из full_eo_list c планом ТО из maintanance_job_list_general
   maintanance_job_list_general_df = pd.read_csv('data/maintanance_job_list_general.csv', dtype = str)
+  maintanance_job_list_general_df = maintanance_job_list_general_df.astype({'downtime_planned': float})
   maintanance_job_list_general_df.rename(columns={'upper_level_tehmesto_code': 'level_upper'}, inplace=True)
-  
   eo_maintanance_plan_df = pd.merge(full_eo_list, maintanance_job_list_general_df, on = 'level_upper', how='inner')
+  
   # удаляем строки, в которых нет данных в колонке eo_main_class_code
   eo_maintanance_plan_df = eo_maintanance_plan_df.loc[eo_maintanance_plan_df['eo_main_class_code'] != 'no_data']
 
-  # для того чтобы можно было заполнить таблицу с датами проведения работ, нужно получить даты, с которых будем стартовать.
-  # отдаем на выгрузку эксель для ввода дат
-  eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code']
+  # получаем первую букву в поле eo_class_code
+  eo_maintanance_plan_df['check_S_eo_class_code'] = eo_maintanance_plan_df['eo_class_code'].astype(str).str[0]
+  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[eo_maintanance_plan_df['check_S_eo_class_code'] != 'S']
+
   # eo_maintanance_plan_df.to_csv('data/eo_maintanance_plan_df_delete.csv')
-  eo_maintanance_plan_update_start_date_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','eo_code', 'eo_description', 'maintanance_name', 'interval_motohours', 'dowtime_plan, hours', 'avearage_day_operation_hours']]
-  eo_maintanance_plan_update_start_date_df['last_maintanance_date'] = ''
-  eo_maintanance_plan_update_start_date_df.to_csv('data/eo_maintanance_plan_update_start_date_df.csv', index=False)
+
+  eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code_id']
+  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_name', 'interval_motohours', 'downtime_planned']].reset_index(drop=True)
+  # eo_maintanance_plan_df['last_maintanance_date'] = '31.12.2022'
+  eo_maintanance_job_code_last_date = pd.read_csv('data/eo_maintanance_job_code_last_date.csv')
+  eo_maintanance_plan_last_date_df = pd.merge(eo_maintanance_plan_df, eo_maintanance_job_code_last_date, on = 'eo_maintanance_job_code', how = 'left')
   
-  return eo_maintanance_plan_update_start_date_df
+  # eo_maintanance_plan_last_date_df.to_csv('data/eo_maintanance_plan_last_date_df_delete.csv')    
+  eo_maintanance_plan_df.to_csv('data/eo_job_catologue.csv', index=False)
+  return eo_maintanance_plan_df
+eo_job_catologue()
+
+
+
 # maintanance_eo_list_start_date_df_prepare()
 # Приклеивааем полученные даты последнего ТО
 def eo_maintanance_plan_df_phase_2():
@@ -216,7 +243,7 @@ def maintanance_matrix():
 
 
 
-maintanance_matrix()
+#maintanance_matrix()
 
 
 # нужно заджойнить запланированный список работ maintanance_jobs_df и матрицу с датами
