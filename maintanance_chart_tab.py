@@ -45,7 +45,14 @@ def maintanance_chart_tab():
                     children=[
                             dbc.Row([
                               dbc.Col(
-                                html.H4(id = 'be_title_id')
+                                children = [
+                                  html.H5(id = 'be_title_id'),
+                                  # html.P(),
+                                  html.H5(id = 'level_upper_title_id'),
+                                  html.H5(id = 'number_of_eo_title_id')
+
+                                ]
+                                
                           )
                         ]),
                        html.P(),

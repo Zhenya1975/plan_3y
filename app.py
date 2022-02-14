@@ -114,6 +114,9 @@ app.layout = dbc.Container(
     Output("checklist_eo", "value"),
     Output("checklist_eo", "options"),
     Output('be_title_id', 'children'),
+    Output('level_upper_title_id', 'children'),
+    Output('number_of_eo_title_id', 'children'),
+    
     Output('planned_downtime', 'figure'),
     Output('ktg_by_years', 'figure'),
     Output('ktg_by_month', 'figure'),
@@ -378,7 +381,7 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
   eo_list_with_filters_df = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'], dtype = str)
   
   # джойним со списком машин
-  full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
+  full_eo_list = initial_values.full_eo_list
   eo_list_with_filters_data_df = pd.merge(eo_list_with_filters_df, full_eo_list, on='eo_code', how='left')
   # джойним с текстом наименований бизнес-единиц
   level_1 = pd.read_csv('data/level_1.csv', dtype = str)
@@ -392,10 +395,27 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
     text_be = text_be + word + ' '
 
   be_title = 'БЕ: {}'.format(text_be)
- 
+  
+  ######################## титульный текст level_upper в выборке #######################
+  # список уникальных level_upper в выборке
+  level_upper_current_unique_df = pd.DataFrame(eo_list_with_filters_data_df['level_upper'].unique(), columns = ['level_upper'])
+  
+  level_upper_df = pd.read_csv('data/level_upper.csv')
+  level_upper_with_filters_data_level_upper_df = pd.merge(level_upper_current_unique_df, level_upper_df, on = 'level_upper', how = 'left')
+  level_upper_title_list = level_upper_with_filters_data_level_upper_df['Название технического места'].unique()
+  text_level_upper= ''
+  for word in level_upper_title_list:
+    text_level_upper = text_level_upper + word + ' '
+
+  level_upper_title = 'Вшст. техместо: {}'.format(text_level_upper)
+  
+  number_of_eo = len(maintanance_jobs_df['eo_code'].unique())
+  number_of_eo_title = 'Кол-во EO в выборке: {}'.format(number_of_eo)
+
+
   new_loading_style = loading_style
 
-  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, be_title, fig_downtime, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks, new_loading_style
+  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, be_title, level_upper_title, number_of_eo_title, fig_downtime, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks, new_loading_style
 
 
 ########## Настройки################
