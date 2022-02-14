@@ -11,6 +11,7 @@ def maintanance_chart_tab():
         children=[
             dcc.Loading(id='loading', parent_style=loading_style),
             
+            
             dbc.Row([
                 # колонка с фильтрами
                 dbc.Col(width=3,
@@ -75,6 +76,11 @@ def maintanance_chart_tab():
                 ),
                 dbc.Col(width=9,
                     children=[
+                            dbc.Row([
+                              dbc.Col(
+                                html.H4(id = 'be_title_id')
+                          )
+                        ]),
                        html.P(),
                        dcc.Graph(id='planned_downtime', config={'displayModeBar': False}),
                        html.Hr(),

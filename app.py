@@ -111,6 +111,7 @@ app.layout = dbc.Container(
 @app.callback([
     Output("checklist_eo", "value"),
     Output("checklist_eo", "options"),
+    Output('be_title_id', 'children'),
     Output('planned_downtime', 'figure'),
     Output('ktg_by_years', 'figure'),
     Output('ktg_by_month', 'figure'),
@@ -143,8 +144,8 @@ def maintanance(checklist_level_1, theme_selector, checklist_eo):
   elif checklist_eo == None:
     eo_list_value = eo_full_list
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_list_value)]
-  print('checklist_eo', checklist_eo)
-  print('длина maintanance_jobs_df', len(maintanance_jobs_df))
+  # print('checklist_eo', checklist_eo)
+  # print('длина maintanance_jobs_df', len(maintanance_jobs_df))
 
 
   # читаем календарный фонд
@@ -335,9 +336,27 @@ def maintanance(checklist_level_1, theme_selector, checklist_eo):
     eo_list_value = checklist_eo
   eo_list_options = functions.eo_checklist_data(maintanance_jobs_df)[0]
 
+  ######################## титульный текст из КАКИХ БЕ машины в выборке #######################
+  eo_list_with_filters_df = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'], dtype = str)
+  
+  # джойним со списком машин
+  full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
+  eo_list_with_filters_data_df = pd.merge(eo_list_with_filters_df, full_eo_list, on='eo_code', how='left')
+  # джойним с текстом наименований бизнес-единиц
+  level_1 = pd.read_csv('data/level_1.csv', dtype = str)
+  eo_list_with_filters_data_level_1_df = pd.merge(eo_list_with_filters_data_df, level_1, on = 'level_1', how = 'left')
+  # print(eo_list_with_filters_data_level_1_df)
+  # список бизнес единиц:
+  be_list = eo_list_with_filters_data_level_1_df['level_1_description'].unique()
+  print(be_list)
+  text= ''
+  for word in be_list:
+    text_be = text + word + ' '
+
+  be_title = 'БЕ: {}'.format(text_be)
  
 
-  return eo_list_value, eo_list_options, fig_downtime, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks
+  return eo_list_value, eo_list_options, be_title, fig_downtime, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks
 
 
 ########## Настройки################
