@@ -128,24 +128,34 @@ app.layout = dbc.Container(
 )
 def maintanance(checklist_level_1, theme_selector, checklist_eo):
   # читаем список работ с простоями
-  maintanance_jobs_df = pd.read_csv('data/maintanance_jobs_df.csv', dtype = str)
-  maintanance_jobs_df = maintanance_jobs_df.astype({'dowtime_plan, hours': float, 'eo_code': str})
+  maintanance_jobs_full_df = pd.read_csv('data/maintanance_jobs_df.csv', dtype = str)
+  maintanance_jobs_full_df = maintanance_jobs_full_df.astype({'dowtime_plan, hours': float, 'eo_code': str})
   # поле даты - в datetime
-  maintanance_jobs_df['maintanance_datetime']= pd.to_datetime(maintanance_jobs_df['maintanance_datetime'])
+  maintanance_jobs_full_df['maintanance_datetime']= pd.to_datetime(maintanance_jobs_full_df['maintanance_datetime'])
   # режем выборку с начала периода отчета
-  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['maintanance_datetime'] >= first_day_of_selection]
-
+  maintanance_jobs_full_df = maintanance_jobs_full_df.loc[maintanance_jobs_full_df['maintanance_datetime'] >= first_day_of_selection]
+  
+  # Список работ до фильтрации в фильтрах. Из этого списка берем options_list в фильтре по EO
+  maintanance_jobs_df = maintanance_jobs_full_df
   ################### Фильтруем выборку фильтрами #############################
-  eo_full_list = maintanance_jobs_df['eo_code'].unique()
-  if checklist_eo != None:
-    eo_list_value = checklist_eo
+  eo_full_list = maintanance_jobs_full_df['eo_code'].unique()
+
+  if checklist_eo == None:
+    eo_filter_list = eo_full_list
   elif checklist_eo == []:
-    eo_list_value = eo_full_list
-  elif checklist_eo == None:
-    eo_list_value = eo_full_list
-  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_list_value)]
-  # print('checklist_eo', checklist_eo)
-  # print('длина maintanance_jobs_df', len(maintanance_jobs_df))
+    eo_filter_list = eo_full_list
+  else:
+    eo_filter_list = checklist_eo
+  
+
+
+  print('checklist_eo', checklist_eo)
+  print('eo_filter_list', eo_filter_list)
+  print('eo_full_list', eo_full_list)
+  
+  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_filter_list)]
+  print('длина maintanance_jobs_df', len(maintanance_jobs_df))
+  
 
 
   # читаем календарный фонд
@@ -156,14 +166,18 @@ def maintanance(checklist_level_1, theme_selector, checklist_eo):
   # full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
   
   # список ЕО, на которые есть календарный фонд
-  eo_cal_fond = pd.DataFrame(eo_calendar_fond['eo_code'].unique(), columns = ['eo_code'])
+  eo_cal_fond = pd.DataFrame(eo_calendar_fond['eo_code'].unique(), columns = ['eo_code'], dtype = str)
   # список ЕО, на которые есть расчет простоев
-  eo_downtime = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'])
+  eo_downtime = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'], dtype = str)
   # делаем пересечение этих списков.
   eo_for_ktg = pd.merge(eo_cal_fond, eo_downtime, on = 'eo_code', how = 'inner')['eo_code'].unique()
+  # print('eo_for_ktg', eo_for_ktg)
   # режем датафрейм с простоями по eo_for_ktg
   maintanance_jobs_df = maintanance_jobs_df.copy()
+  
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
+  
+  
   # режем датафрейм с календарным фондом  по eo_for_ktg
   maintanance_jobs_df = maintanance_jobs_df.copy()
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
@@ -200,6 +214,7 @@ def maintanance(checklist_level_1, theme_selector, checklist_eo):
     )
 
   ################# График КТГ по годам ###############################
+  maintanance_jobs_df.to_csv('data/maintanance_jobs_df_delete.csv')
   maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
   eo_calendar_fond['year'] = eo_calendar_fond['datetime'].dt.year
   # maintanance_jobs_df['year'].astype('str')
@@ -334,7 +349,7 @@ def maintanance(checklist_level_1, theme_selector, checklist_eo):
   eo_list_value  = []
   if checklist_eo != None:
     eo_list_value = checklist_eo
-  eo_list_options = functions.eo_checklist_data(maintanance_jobs_df)[0]
+  eo_list_options = functions.eo_checklist_data(maintanance_jobs_full_df)[0]
 
   ######################## титульный текст из КАКИХ БЕ машины в выборке #######################
   eo_list_with_filters_df = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'], dtype = str)
@@ -349,9 +364,9 @@ def maintanance(checklist_level_1, theme_selector, checklist_eo):
   # список бизнес единиц:
   be_list = eo_list_with_filters_data_level_1_df['level_1_description'].unique()
   print(be_list)
-  text= ''
+  text_be= ''
   for word in be_list:
-    text_be = text + word + ' '
+    text_be = text_be + word + ' '
 
   be_title = 'БЕ: {}'.format(text_be)
  
@@ -441,6 +456,7 @@ def parse_contents(contents, filename):
             functions.maintanance_jobs_df_prepare()
             functions.fill_calendar_fond()
             functions.maintanance_matrix()
+            functions.eo_job_catologue()
         
             updated_eo_maintanance_job_code_last_date.to_csv('data/eo_maintanance_job_code_last_date.csv')
             

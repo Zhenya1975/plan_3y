@@ -137,9 +137,9 @@ maintanance_jobs_df_prepare()
  
 
 # заполняем календарный фонд по оборудованию
-# берем машины, кооторые участвуют в файле eo_calendar_fond.csv
+# берем машины, кооторые участвуют в файле eo_job_catologue.csv
 def fill_calendar_fond():
-  eo_list_under_maintanance_program = pd.read_csv('data/eo_calendar_fond.csv', dtype = str)
+  eo_list_under_maintanance_program = pd.read_csv('data/eo_job_catologue.csv', dtype = str)
   # new data frame with split value columns
   # new = eo_list_under_maintanance_program['eo_code'].str.split(".", n = 1, expand = True)
   # making separate first name column from new data frame
