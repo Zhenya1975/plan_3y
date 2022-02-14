@@ -228,9 +228,27 @@ def maintanance_matrix():
   matrix_data_df.to_csv('data/matrix_data_df.csv')
 
 
-maintanance_matrix()
+# maintanance_matrix()
 
 
+def eo_checklist_data(df):
+    '''подготовка данных для фильтра по машинам'''
+    eo_list_unique = pd.DataFrame(df['eo_code'].unique(), columns=['eo_code'])
+    eo_list = pd.merge(eo_list_unique, full_eo_list, on='eo_code', how = 'left')
+    eo_list_df = eo_list.loc[:, ['eo_code', 'eo_description']]
+    
+    # eo_list_df.sort_values('eo_description', inplace=True)
+    # print(eo_list_df)
+    eo_checklist_data = []
+    eo_list = []
+    for index, row in eo_list_df.iterrows():
+        dict_temp = {}
+        dict_temp['label'] = " " + row['eo_code'] + "_" + row['eo_description']
+        dict_temp['value'] = row['eo_code']
+        eo_checklist_data.append(dict_temp)
+        eo_list.append(row['eo_code'])
+    
+    return eo_checklist_data, eo_list
 
 
 # python functions.py

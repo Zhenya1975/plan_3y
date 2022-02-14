@@ -66,6 +66,11 @@ def maintanance_chart_tab():
                       "Уровень Вышестоящее техместо",
                       dcc.Dropdown(id="checklist_level_upper", multi=True),
                   ]),
+                  html.P(),
+                    html.Div([
+                      "ЕО",
+                      dcc.Dropdown(id="checklist_eo", multi=True),
+                  ]),
                   ]
                 ),
                 dbc.Col(width=9,
