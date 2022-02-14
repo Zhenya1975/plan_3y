@@ -19,54 +19,21 @@ def maintanance_chart_tab():
                     
                     html.P(),
                     html.Div([
-                      "Техместа. Уровень 1",
+                      "Бизнес единица",
                       dcc.Dropdown(id="checklist_level_1", multi=True),
                   ]),
 
 
                     html.P(),
                     html.Div([
-                      "EO Основной Класс",
+                      "Техместо вышестоящее",
                       dcc.Dropdown(id="checklist_main_eo_class", multi=True),
                   ]),
                     
-                    html.P(),
-                    html.Div([
-                      "EO Класс",
-                      dcc.Dropdown(id="checklist_eo_class", multi=True),
-                  ]),
                     
                     
                     
-                    html.P(),
-                    html.Div([
-                      "Техместа. Уровень 2",
-                      dcc.Dropdown(id="checklist_level_2", multi=True),
-                  ]),
-
-                  #html.P(),
-                  #  html.Div([
-                  #    "Уровень 3",
-                  #    dcc.Dropdown(id="checklist_level_3", multi=True),
-                  #]),
-
-                  # html.P(),
-                  #  html.Div([
-                  #    "Уровень 4",
-                  #    dcc.Dropdown(id="checklist_level_4", multi=True),
-                  #]),
-
-                  #html.P(),
-                  #  html.Div([
-                  #    "Уровень 5",
-                  #    dcc.Dropdown(id="checklist_level_5", multi=True),
-                  #]),
-
-                  html.P(),
-                    html.Div([
-                      "Уровень Вышестоящее техместо",
-                      dcc.Dropdown(id="checklist_level_upper", multi=True),
-                  ]),
+                  
                   html.P(),
                     html.Div([
                       "ЕО",

@@ -1,5 +1,6 @@
 import pandas as pd
 
+full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
 
 
 first_day_of_selection = pd.to_datetime('01.01.2023', format='%d.%m.%Y')

@@ -230,10 +230,38 @@ def maintanance_matrix():
 
 # maintanance_matrix()
 
+def checklist_main_eo_class_options(df):
+  '''подготовка данных для фильтра по main_eo_class'''
+  
+  join_eo_and_full_eo_df = pd.merge(df, full_eo_list, on='eo_code', how = 'left')
+  
+  join_eo_and_full_eo_df = join_eo_and_full_eo_df.loc[:, ['level_upper']]
+  
+
+  level_upper_unique_df = pd.DataFrame(join_eo_and_full_eo_df['level_upper'].unique(), columns=['level_upper'], dtype = str)
+  
+
+  level_upper_df = pd.read_csv('data/level_upper.csv', dtype = str)
+  level_upper__df = pd.merge(level_upper_unique_df, level_upper_df, on='level_upper', how = 'left')
+
+  level_upper_checklist_data = []
+  level_upper_list = []
+  for index, row in level_upper__df.iterrows():
+      dict_temp = {}
+      dict_temp['label'] = row['Название технического места']
+      dict_temp['value'] = row['level_upper']
+      level_upper_checklist_data.append(dict_temp)
+
+      level_upper_list.append(row['level_upper'])
+  
+  return level_upper_checklist_data, level_upper_list
+
+
+
 
 def eo_checklist_data(df):
     '''подготовка данных для фильтра по машинам'''
-    eo_list_unique = pd.DataFrame(df['eo_code'].unique(), columns=['eo_code'])
+    eo_list_unique = pd.DataFrame(df['eo_code'].unique(), columns=['eo_code'], dtype = str)
     eo_list = pd.merge(eo_list_unique, full_eo_list, on='eo_code', how = 'left')
     eo_list_df = eo_list.loc[:, ['eo_code', 'eo_description']]
     
