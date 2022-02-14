@@ -116,6 +116,7 @@ app.layout = dbc.Container(
     Output('ktg_by_years', 'figure'),
     Output('ktg_by_month', 'figure'),
     Output('ktg_by_weeks', 'figure'),
+    Output('loading', 'parent_style'),
 ],
     [
         Input('checklist_level_1', 'value'),
@@ -149,15 +150,13 @@ def maintanance(checklist_level_1, theme_selector, checklist_eo):
   
 
 
-  print('checklist_eo', checklist_eo)
-  print('eo_filter_list', eo_filter_list)
-  print('eo_full_list', eo_full_list)
+  # print('checklist_eo', checklist_eo)
+  # print('eo_filter_list', eo_filter_list)
+  # print('eo_full_list', eo_full_list)
   
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_filter_list)]
-  print('длина maintanance_jobs_df', len(maintanance_jobs_df))
+  # print('длина maintanance_jobs_df', len(maintanance_jobs_df))
   
-
-
   # читаем календарный фонд
   eo_calendar_fond = pd.read_csv('data/eo_calendar_fond.csv', dtype = str)
   eo_calendar_fond = eo_calendar_fond.astype({'calendar_fond': float})
@@ -363,15 +362,16 @@ def maintanance(checklist_level_1, theme_selector, checklist_eo):
   # print(eo_list_with_filters_data_level_1_df)
   # список бизнес единиц:
   be_list = eo_list_with_filters_data_level_1_df['level_1_description'].unique()
-  print(be_list)
+  # print(be_list)
   text_be= ''
   for word in be_list:
     text_be = text_be + word + ' '
 
   be_title = 'БЕ: {}'.format(text_be)
  
+  new_loading_style = loading_style
 
-  return eo_list_value, eo_list_options, be_title, fig_downtime, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks
+  return eo_list_value, eo_list_options, be_title, fig_downtime, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks, new_loading_style
 
 
 ########## Настройки################
