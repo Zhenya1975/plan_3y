@@ -19,3 +19,11 @@ def first_and_last_day_of_operation_default():
 
 # first_and_last_day_of_operation_default()
 
+def start_of_operation():
+  full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
+  eo_start_operation = pd.read_csv('data/ео_start_operation.csv', dtype = str)
+  eo_start_operation['operation_start_date']= pd.to_datetime(eo_start_operation['operation_start_date'])
+  full_eo_list_ = pd.merge(full_eo_list, eo_start_operation, on = 'eo_code', how = 'left')
+  full_eo_list_.to_csv('data/full_eo_list.csv')
+  # print(eo_start_operation.info())
+# start_of_operation()

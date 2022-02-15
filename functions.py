@@ -12,24 +12,11 @@ last_day_of_selection = pd.to_datetime('01.01.2026', format='%d.%m.%Y')
 first_day_of_selection = initial_values.first_day_of_selection
 last_day_of_selection_date = initial_values.last_day_of_selection
 
-# при получении внешнего excel maintanance_job_list_general проверяем - есть ли в полученном файле ноые записи.
-# Если есть, то обновляем файл
-def check_maintanance_job_list_general_file(df):
-  # сначала получаем то, что у нас уже сохранено.
-  maintanance_job_list_general_old = pd.read_csv('data/maintanance_job_list_general.csv', dtype = str)
-  maintanance_job_list_general_old = maintanance_job_list_general_old.astype({'downtime_planned': float})
-
-  # получаем новый файл
-  maintanance_job_list_general_new = df.astype({'downtime_planned': float})
-
-  # maintanance_job_list_general_new.to_csv('data/maintanance_job_list_general_new_delete.csv')
-
-  maintanance_job_list_general_updated = maintanance_job_list_general_new
-  return maintanance_job_list_general_updated
 
 
 # справочник работ eo_job_catologue
 def eo_job_catologue():
+  '''создание файла eo_job_catologue: список оборудование - работа на оборудовании'''
   # Джойним список машин из full_eo_list c планом ТО из maintanance_job_list_general
   maintanance_job_list_general_df = pd.read_csv('data/maintanance_job_list_general.csv', dtype = str)
   maintanance_job_list_general_df = maintanance_job_list_general_df.astype({'downtime_planned': float})
@@ -43,15 +30,15 @@ def eo_job_catologue():
   eo_maintanance_plan_df['check_S_eo_class_code'] = eo_maintanance_plan_df['eo_class_code'].astype(str).str[0]
   eo_maintanance_plan_df = eo_maintanance_plan_df.loc[eo_maintanance_plan_df['check_S_eo_class_code'] != 'S']
 
-  # eo_maintanance_plan_df.to_csv('data/eo_maintanance_plan_df_delete.csv')
+
 
   eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code_id']
-  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_name', 'interval_motohours', 'downtime_planned']].reset_index(drop=True)
+  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval', 'operation_start_date']].reset_index(drop=True)
   # eo_maintanance_plan_df['last_maintanance_date'] = '31.12.2022'
   eo_maintanance_job_code_last_date = pd.read_csv('data/eo_maintanance_job_code_last_date.csv')
   eo_maintanance_plan_last_date_df = pd.merge(eo_maintanance_plan_df, eo_maintanance_job_code_last_date, on = 'eo_maintanance_job_code', how = 'left')
   
-  # eo_maintanance_plan_last_date_df.to_csv('data/eo_maintanance_plan_last_date_df_delete.csv')    
+  
   eo_maintanance_plan_df.to_csv('data/eo_job_catologue.csv', index=False)
   return eo_maintanance_plan_df
 eo_job_catologue()
@@ -61,79 +48,121 @@ eo_job_catologue()
 # maintanance_eo_list_start_date_df_prepare()
 # Приклеивааем полученные даты последнего ТО
 def maintanance_jobs_df_prepare():
+  '''подготовка файла со списком работ - основной файл для построения графика простоев'''
   #eo_maintanance_plan_update_start_date_df = maintanance_eo_list_start_date_df_prepare()
   #eo_maintanance_plan_update_start_date_df.drop(columns=['last_maintanance_date'], inplace=True)
   
   #eo_maint_plan_with_last_dates = pd.read_csv('data/eo_maintanance_plan_with_start_date_df.csv', dtype = str)
   #eo_maint_plan_with_last_dates = eo_maint_plan_with_last_dates.loc[:, ['eo_maintanance_job_code', 'last_maintanance_date']]
   #eo_maint_plan = pd.merge(eo_maintanance_plan_update_start_date_df, eo_maint_plan_with_last_dates, on='eo_maintanance_job_code', how='left')
-  
+  # читаем файл eo_job_catologue
   eo_maint_plan = pd.read_csv('data/eo_job_catologue.csv', dtype = str)
   eo_maint_plan["downtime_planned"] = eo_maint_plan["downtime_planned"].astype('float')
+  
+  # читаем файл с датой проведения последней формы на машине. Исходим из того, что все даты должны быть записаны в этом файле
   eo_maintanance_job_code_last_date = pd.read_csv('data/eo_maintanance_job_code_last_date.csv', dtype = str)
+
+  # джойним eo_job_catologue с датами проведения последней формы
   eo_maint_plan_with_dates = pd.merge(eo_maint_plan, eo_maintanance_job_code_last_date, on = 'eo_maintanance_job_code', how = 'left')
-  eo_maint_plan_with_dates_with_full_eo_list = pd.merge(eo_maint_plan_with_dates, full_eo_list, on = 'eo_code', how = 'left')
+
+  # выдергиваем из full_eo_list колонки, которые нужны
+  full_eo_list_selected = full_eo_list.loc[:, ['eo_code', 'avearage_day_operation_hours']]
+  # джойним с full_eo_list
+  eo_maint_plan_with_dates_with_full_eo_list = pd.merge(eo_maint_plan_with_dates, full_eo_list_selected, on = 'eo_code', how = 'left')
   eo_maint_plan = eo_maint_plan_with_dates_with_full_eo_list
-  # eo_maint_plan_with_dates_with_full_eo_list.to_csv('data/eo_maint_plan_delete.csv')
+
+  # eo_maint_plan.to_csv('data/eo_maint_plan_delete.csv')
   # в maintanance_jobs_result_list будем складывать дикты с записями о сгенерированных ТО-шках.
   maintanance_jobs_result_list = []
   for index, row in eo_maint_plan.iterrows():
     maintanance_job_code = row['eo_maintanance_job_code']
     eo_code = row['eo_code']
-    interval_motohours = float(row['interval_motohours'])
+    standard_interval_motohours = float(row['interval_motohours'])
     plan_downtime = row['downtime_planned']
     start_point = row['last_maintanance_date']
+    operation_start_date = row['operation_start_date']
     avearage_day_operation_hours = float(row['avearage_day_operation_hours'])
     maintanance_name = row['maintanance_name']
+    pass_interval = row['pass_interval']
 
     # start_point = pd.to_datetime(start_point, format='%Y-%m-%d')
     start_point = pd.to_datetime(start_point, format='%d.%m.%Y')
     # print(type(start_point))
     next_maintanance_datetime = start_point
-    # print('interval_motohours: ', type(interval_motohours))
+  
     # если это ежедневное обслуживание
     if maintanance_name == 'ЕТО':
       while next_maintanance_datetime < last_day_of_selection:
         temp_dict = {}
         temp_dict['maintanance_job_code'] = maintanance_job_code
         temp_dict['eo_code'] = eo_code
-        temp_dict['interval_motohours'] = interval_motohours
+        temp_dict['interval_motohours'] = standard_interval_motohours
         temp_dict['dowtime_plan, hours'] = plan_downtime
         temp_dict['maintanance_datetime'] = next_maintanance_datetime
         temp_dict['maintanance_date'] = next_maintanance_datetime.date()
         temp_dict['maintanance_name'] = maintanance_name
         # temp_dict['avearage_day_operation_hours'] = avearage_day_operation_hours
-        maintanance_jobs_result_list.append(temp_dict)
+        
         next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=24)
-    # для остальных надо посчитать помент начала следующей работы
-    else:
+        maintanance_jobs_result_list.append(temp_dict)
+    # если у фрмы нет поглащений другими формами 
+    elif pass_interval == 'not':
       while next_maintanance_datetime < last_day_of_selection:
         temp_dict = {}
         temp_dict['maintanance_job_code'] = maintanance_job_code
         temp_dict['eo_code'] = eo_code
-        temp_dict['interval_motohours'] = interval_motohours
+        temp_dict['interval_motohours'] = standard_interval_motohours
         temp_dict['dowtime_plan, hours'] = plan_downtime
         temp_dict['maintanance_datetime'] = next_maintanance_datetime
         temp_dict['maintanance_date'] = next_maintanance_datetime.date()
         temp_dict['maintanance_name'] = maintanance_name
-        maintanance_jobs_result_list.append(temp_dict)    
         
         # количество суток, которые требуются для того, чтобы выработать интервал до следующей формы
-        number_of_days_to_next_maint = interval_motohours // avearage_day_operation_hours
+        number_of_days_to_next_maint = standard_interval_motohours // avearage_day_operation_hours
         # остаток часов в следующие сутки для выработки интервала до следующей формы
-        remaining_hours = interval_motohours - number_of_days_to_next_maint * avearage_day_operation_hours
+        remaining_hours = standard_interval_motohours - number_of_days_to_next_maint * avearage_day_operation_hours
         # календарный интервал между формами = кол-во суток х 24 + остаток
         calendar_interval_between_maint = number_of_days_to_next_maint *24 + remaining_hours
         next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=calendar_interval_between_maint) 
+        maintanance_jobs_result_list.append(temp_dict)
         
-
+    # остаются записи, в которых pass_interval - это список форм, которые надо исключить
+    else:
+      #  maintanance_interval - это интервал от стартовой точки, в который будем проводить форму
+      maintanance_interval = standard_interval_motohours
+      pass_interval_list = pass_interval.split(';')
+      # print(pass_interval_list)
+      pass_interval_list = [int(i) for i in pass_interval_list]
+      # print(pass_interval_list)
+      while next_maintanance_datetime < last_day_of_selection:
+        temp_dict = {}
+        temp_dict['maintanance_job_code'] = maintanance_job_code
+        temp_dict['eo_code'] = eo_code
+        temp_dict['interval_motohours'] = standard_interval_motohours
+        temp_dict['dowtime_plan, hours'] = plan_downtime
+        temp_dict['maintanance_datetime'] = next_maintanance_datetime
+        temp_dict['maintanance_date'] = next_maintanance_datetime.date()
+        temp_dict['maintanance_name'] = maintanance_name
+        maintanance_interval = maintanance_interval + standard_interval_motohours
+        # если maintanance_interval не входит в список pass_interval то создаем запись. 
+        if maintanance_interval not in pass_interval_list:
+            
+          # количество суток, которые требуются для того, чтобы выработать интервал до следующей формы
+          number_of_days_to_next_maint = maintanance_interval // avearage_day_operation_hours
+          # остаток часов в следующие сутки для выработки интервала до следующей формы
+          remaining_hours = maintanance_interval - number_of_days_to_next_maint * avearage_day_operation_hours
+          # календарный интервал между формами = кол-во суток х 24 + остаток
+          calendar_interval_between_maint = number_of_days_to_next_maint *24 + remaining_hours
+          next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=calendar_interval_between_maint) 
+          maintanance_jobs_result_list.append(temp_dict)
+          
   maintanance_jobs_df = pd.DataFrame(maintanance_jobs_result_list)
   # maintanance_jobs_df['maintanance_date'] = maintanance_jobs_df['maintanance_date'].astype(str)
 
   maintanance_jobs_df.to_csv('data/maintanance_jobs_df.csv')
   # print(maintanance_jobs_df.info())
   return maintanance_jobs_df
-maintanance_jobs_df_prepare()
+# maintanance_jobs_df_prepare()
  
 
 # заполняем календарный фонд по оборудованию
@@ -198,7 +227,7 @@ def maintanance_matrix():
   
   df1 = pd.merge(df, eo_selected_data_with_description, on = 'eo_code', how = 'left') 
   
-  df1.to_csv('data/df1_delete.csv')
+ 
   
   ## print(df1)
   # making separate first name column from new data frame

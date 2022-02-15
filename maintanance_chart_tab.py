@@ -55,6 +55,35 @@ def maintanance_chart_tab():
                                 
                           )
                         ]),
+                        dbc.Row([
+                              dbc.Col(width = 4,
+                                children = [
+                                  dbc.Card(
+                                    dbc.CardBody(
+                                        [
+                                            html.H4("2023 год", className="card-title"),
+                                            #html.H6("Card subtitle", className="card-subtitle"),
+                                            html.P(id = 'downtime_2023'),
+                                            html.P(id = 'cal_fond_2023'),
+
+                                           
+                                        ]
+                                    ),
+                                    style={"width": "18rem"},
+
+                                  )
+
+                                ],
+                 
+                              ),
+                              dbc.Col(width = 4,
+                              
+                              ),
+                              dbc.Col(width = 4,
+                              
+                              )
+                        ]),
+                       
                        html.P(),
                        dcc.Graph(id='planned_downtime', config={'displayModeBar': False}),
                        html.Hr(),
