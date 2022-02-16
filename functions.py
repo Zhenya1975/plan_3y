@@ -68,12 +68,26 @@ def pass_interval_fill():
       
 
   maintanance_job_list_general.to_csv('data/maintanance_job_list_general.csv', index=False)
-      
-       
-
 
 pass_interval_fill()  
 
+def maintanance_category_prep():
+  df = pd.read_csv('data/maintanance_job_list_general.csv')
+  maintanance_category_id_list = []
+  maintanance_category_id_df_list = []
+  for index, row in df.iterrows():
+    temp_dict = {}
+    maintanance_category_id = row['maintanance_category_id']
+    maintanance_name = row['maintanance_name']
+    temp_dict['maintanance_category_id'] = maintanance_category_id
+    temp_dict['maintanance_name'] = maintanance_name
+    if maintanance_category_id not in maintanance_category_id_list:
+      maintanance_category_id_list.append(maintanance_category_id)
+      maintanance_category_id_df_list.append(temp_dict)
+  
+  df_result = pd.DataFrame(maintanance_category_id_df_list)
+  df_result.to_csv('data/maintanance_category.csv')
+# maintanance_category_prep()  
 
 # справочник работ eo_job_catologue
 def eo_job_catologue():
@@ -95,7 +109,7 @@ def eo_job_catologue():
 
   eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code_id']
   eo_maintanance_plan_df['last_maintanance_date'] = initial_values.last_maintanance_date
-  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','go_interval', 'operation_start_date', 'last_maintanance_date']].reset_index(drop=True)
+  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_category_id', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','go_interval', 'operation_start_date', 'last_maintanance_date']].reset_index(drop=True)
   
  
   
@@ -138,6 +152,7 @@ def maintanance_jobs_df_prepare():
     start_point = row['last_maintanance_date']
     operation_start_date = row['operation_start_date']
     avearage_day_operation_hours = float(row['avearage_day_operation_hours'])
+    maintanance_category_id = row['maintanance_category_id']
     maintanance_name = row['maintanance_name']
     pass_interval = row['pass_interval']
     go_interval = row['go_interval']
@@ -158,6 +173,7 @@ def maintanance_jobs_df_prepare():
         temp_dict['dowtime_plan, hours'] = plan_downtime
         temp_dict['maintanance_datetime'] = maintanance_datetime
         temp_dict['maintanance_date'] = maintanance_datetime.date()
+        temp_dict['maintanance_category_id'] = maintanance_category_id
         temp_dict['maintanance_name'] = maintanance_name
         # temp_dict['avearage_day_operation_hours'] = avearage_day_operation_hours
         
@@ -175,6 +191,7 @@ def maintanance_jobs_df_prepare():
         temp_dict['dowtime_plan, hours'] = plan_downtime
         temp_dict['maintanance_datetime'] = maintanance_datetime
         temp_dict['maintanance_date'] = maintanance_datetime.date()
+        temp_dict['maintanance_category_id'] = maintanance_category_id
         temp_dict['maintanance_name'] = maintanance_name
         
         # количество суток, которые требуются для того, чтобы выработать интервал до следующей формы
@@ -214,6 +231,7 @@ def maintanance_jobs_df_prepare():
         temp_dict['eo_code'] = eo_code
         temp_dict['interval_motohours'] = standard_interval_motohours
         temp_dict['dowtime_plan, hours'] = plan_downtime
+        temp_dict['maintanance_category_id'] = maintanance_category_id
         temp_dict['maintanance_name'] = maintanance_name
         temp_dict['maintanance_datetime'] = maintanance_datetime
         temp_dict['maintanance_date'] = maintanance_datetime.date()
@@ -225,6 +243,10 @@ def maintanance_jobs_df_prepare():
       
           
   maintanance_jobs_df = pd.DataFrame(maintanance_jobs_result_list)
+  # режем то, что получилось в период три года
+  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['maintanance_datetime']>= first_day_of_selection]
+  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['maintanance_datetime']<= last_day_of_selection]
+  
   maintanance_jobs_df['maintanance_date'] = maintanance_jobs_df['maintanance_date'].astype(str)
 
   maintanance_jobs_df.to_csv('data/maintanance_jobs_df.csv')
@@ -372,6 +394,26 @@ def eo_checklist_data(df):
         eo_list.append(row['eo_code'])
     
     return eo_checklist_data, eo_list
+
+
+############# подготовка фильтра по типам работ #########################
+def maintanance_category_filter(df):
+  '''данные для фильтра по категориям работ'''
+  # df на входе - это текущий датафрейм для построения графиков с учетом примененных фильтров
+  # уникальные значения maintanance_category_id из текущей выборки df
+  maintanance_category_id_list = pd.DataFrame(df['maintanance_category_id'].unique(), columns = ['maintanance_category_id'])
+  maintanance_category_full_df = pd.read_csv('data/maintanance_category.csv')
+  maintanance_category_df = pd.merge(maintanance_category_id_list, maintanance_category_full_df, on = 'maintanance_category_id', how = 'left')
+  maintanance_category_checklist_data = []
+  maintanance_category_list = []
+  for index, row in maintanance_category_df.iterrows():
+      dict_temp = {}
+      dict_temp['label'] = " " + row['maintanance_name']
+      dict_temp['value'] = row['maintanance_category_id']
+      maintanance_category_checklist_data.append(dict_temp)
+      maintanance_category_list.append(row['maintanance_category_id'])
+  return maintanance_category_checklist_data, maintanance_category_list
+  
 
 
 # python functions.py

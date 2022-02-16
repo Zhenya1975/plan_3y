@@ -39,6 +39,32 @@ def maintanance_chart_tab():
                       "ЕО",
                       dcc.Dropdown(id="checklist_eo", multi=True),
                   ]),
+                    html.Hr(),
+                    html.P('Категории работ'),
+                    html.Div(style={'marginLeft': '3px'},
+                                     children=[
+                                         dbc.Button("Выбрать все", size="sm",
+                                                    id="select_all_maintanance_category_checklist",
+                                                    style={'marginBottom': '3px',
+                                                           'marginTop': '3px',
+                                                           'backgroundColor': '#232632'}
+                                                    ),
+                                         dbc.Button("Снять выбор", color="secondary",
+                                                    size="sm",
+                                                    style={'marginBottom': '3px',
+                                                           'marginTop': '3px',
+                                                           'backgroundColor': '#232632'},
+                                                    id="release_all_maintanance_category_checklist"),
+
+                                         html.P(),
+                                         dcc.Checklist(
+                                             id='maintanance_category_checklist',
+                                             # options=regions,
+                                             # value=regions_list,
+                                             labelStyle=dict(display='block')),
+                                         html.Hr(className="hr"),
+                                     ]
+                               ),
                   ]
                 ),
                 dbc.Col(width=9,
