@@ -505,12 +505,14 @@ def parse_contents(contents, filename):
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded),decimal=',')
             
-            functions.eo_job_catologue()
           
             df.to_csv('data/maintanance_job_list_general.csv')
+            functions.pass_interval_fill()
+            functions.eo_job_catologue()
+            
             # если мы загрузили список с работами, то надо подготовить данные для того чтобы вставить
             # даты начала расчета для ТО-шек
-            # functions.maintanance_eo_list_start_date_df_prepare()
+            
 
         elif 'xlsx' in filename and "eo_job_catologue" in filename:
             # Assume that the user uploaded an excel file
@@ -524,7 +526,7 @@ def parse_contents(contents, filename):
             updated_eo_maintanance_job_code_last_date = df.loc[:, ['eo_maintanance_job_code', 'last_maintanance_date']]
             
             functions.fill_calendar_fond()
-            functions.maintanance_matrix()
+            #functions.maintanance_matrix()
             functions.eo_job_catologue()
             functions.maintanance_jobs_df_prepare()
         

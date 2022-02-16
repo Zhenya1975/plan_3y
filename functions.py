@@ -13,6 +13,69 @@ first_day_of_selection = initial_values.first_day_of_selection
 last_day_of_selection_date = initial_values.last_day_of_selection
 
 
+def pass_interval_fill():
+  '''создание списка pass interval в maintanance_job_list_general'''
+  maintanance_job_list_general = pd.read_csv('data/maintanance_job_list_general.csv')
+  maintanance_job_list_general = maintanance_job_list_general.astype({'downtime_planned': float})
+  
+
+  for index, row in maintanance_job_list_general.iterrows():
+    pass_interval_temp = row['pass_interval']
+    interval_motohours = int(row['interval_motohours'])
+    #print(interval_motohours)
+    if pass_interval_temp != 'not':
+      pass_interval_list = pass_interval_temp.split(';')
+      pass_interval_list = [int(i) for i in pass_interval_list]
+      # print('original pass_interval_list: ', pass_interval_list)
+
+      # в temp_list складываем значения, которые соответствуют original pass_interval_list
+      temp_list = []
+      for pass_interval_value in pass_interval_list:
+        if pass_interval_value not in temp_list:
+          temp_list.append(pass_interval_value)
+        # print('pass_interval_value in original pass_interval_list', pass_interval_value)
+        temp_value = pass_interval_value
+        # temp_list = []
+        while temp_value < 27000:
+          # print(temp_value)
+          if temp_value not in temp_list:
+            
+            temp_list.append(temp_value)
+            temp_list.sort()
+          temp_value = temp_value + pass_interval_value
+      #####################  Создаем список maintanance_interval #####################
+      # next_go_interval - значение интервала проведения формы, которое будем итеративно считать
+      next_go_interval = interval_motohours
+      # go_interval_list  - список, в который будем складывать значения интервалов для проведения форм
+      go_interval_list = []
+      for pass_interval in temp_list:
+        # если текущее значение next_go_interval не находится в temp_list (списке пропусков форм)
+        # то добавляем значение в белый список
+        if next_go_interval not in temp_list:
+          go_interval_list.append(next_go_interval)
+        # прибавляем к текущему значению next_go_interval значение периодичности interval_motohours
+        next_go_interval = next_go_interval + interval_motohours
+      # print('new_pass_list:', temp_list)
+      # print('go_list: ', go_interval_list)  
+        
+      temp_list = [str(i) for i in temp_list]
+      temp_string = ";".join(temp_list)  
+      maintanance_job_list_general.loc[index, ['pass_interval']] = temp_string
+
+      go_interval_list = [str(i) for i in go_interval_list]
+      go_interval_list_string = ";".join(go_interval_list)  
+      maintanance_job_list_general.loc[index, ['go_interval']] = go_interval_list_string
+    else:
+      maintanance_job_list_general.loc[index, ['go_interval']] = 'not'
+      
+
+  maintanance_job_list_general.to_csv('data/maintanance_job_list_general.csv', index=False)
+  #print(maintanance_job_list_general['pass_interval_updated'])      
+       
+        # print(pass_interval_value) 
+
+pass_interval_fill()  
+
 
 # справочник работ eo_job_catologue
 def eo_job_catologue():
@@ -33,7 +96,7 @@ def eo_job_catologue():
 
 
   eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code_id']
-  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval', 'operation_start_date']].reset_index(drop=True)
+  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','operation_start_date']].reset_index(drop=True)
   # eo_maintanance_plan_df['last_maintanance_date'] = '31.12.2022'
   eo_maintanance_job_code_last_date = pd.read_csv('data/eo_maintanance_job_code_last_date.csv')
   eo_maintanance_plan_last_date_df = pd.merge(eo_maintanance_plan_df, eo_maintanance_job_code_last_date, on = 'eo_maintanance_job_code', how = 'left')
@@ -105,7 +168,7 @@ def maintanance_jobs_df_prepare():
         
         next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=24)
         maintanance_jobs_result_list.append(temp_dict)
-    # если у фрмы нет поглащений другими формами 
+    # если у формы нет поглащений другими формами 
     elif pass_interval == 'not':
       while next_maintanance_datetime < last_day_of_selection:
         temp_dict = {}
@@ -123,7 +186,7 @@ def maintanance_jobs_df_prepare():
         remaining_hours = standard_interval_motohours - number_of_days_to_next_maint * avearage_day_operation_hours
         # календарный интервал между формами = кол-во суток х 24 + остаток
         calendar_interval_between_maint = number_of_days_to_next_maint *24 + remaining_hours
-        next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=calendar_interval_between_maint) 
+        next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=calendar_interval_between_maint) + timedelta(hours = plan_downtime)
         maintanance_jobs_result_list.append(temp_dict)
         
     # остаются записи, в которых pass_interval - это список форм, которые надо исключить
@@ -133,27 +196,38 @@ def maintanance_jobs_df_prepare():
       pass_interval_list = pass_interval.split(';')
       # print(pass_interval_list)
       pass_interval_list = [int(i) for i in pass_interval_list]
-      # print(pass_interval_list)
+      # print('maintanance_interval', maintanance_interval)
+      # print('pass_interval_list',pass_interval_list)
+      
+      temp_dict = {}
+      temp_dict['maintanance_job_code'] = maintanance_job_code
+      temp_dict['eo_code'] = eo_code
+      temp_dict['interval_motohours'] = standard_interval_motohours
+      temp_dict['dowtime_plan, hours'] = plan_downtime
+      temp_dict['maintanance_datetime'] = next_maintanance_datetime
+      temp_dict['maintanance_date'] = next_maintanance_datetime.date()
+      temp_dict['maintanance_name'] = maintanance_name
+
+      # запускаем цикл в котором будем прибавлять интервалы ТО
+      
       while next_maintanance_datetime < last_day_of_selection:
-        temp_dict = {}
-        temp_dict['maintanance_job_code'] = maintanance_job_code
-        temp_dict['eo_code'] = eo_code
-        temp_dict['interval_motohours'] = standard_interval_motohours
-        temp_dict['dowtime_plan, hours'] = plan_downtime
-        temp_dict['maintanance_datetime'] = next_maintanance_datetime
-        temp_dict['maintanance_date'] = next_maintanance_datetime.date()
-        temp_dict['maintanance_name'] = maintanance_name
+        
         maintanance_interval = maintanance_interval + standard_interval_motohours
+        
+        temp_dict['maintanance_interval'] =  maintanance_interval
         # если maintanance_interval не входит в список pass_interval то создаем запись. 
         if maintanance_interval not in pass_interval_list:
             
           # количество суток, которые требуются для того, чтобы выработать интервал до следующей формы
           number_of_days_to_next_maint = maintanance_interval // avearage_day_operation_hours
+          temp_dict['number_of_days_to_next_maint'] = number_of_days_to_next_maint
           # остаток часов в следующие сутки для выработки интервала до следующей формы
           remaining_hours = maintanance_interval - number_of_days_to_next_maint * avearage_day_operation_hours
           # календарный интервал между формами = кол-во суток х 24 + остаток
           calendar_interval_between_maint = number_of_days_to_next_maint *24 + remaining_hours
-          next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=calendar_interval_between_maint) 
+          next_maintanance_datetime = next_maintanance_datetime + timedelta(hours=calendar_interval_between_maint) + timedelta(hours = plan_downtime)
+          temp_dict['next_maintanance_datetime'] = next_maintanance_datetime
+          temp_dict['pass_interval_list'] = pass_interval_list
           maintanance_jobs_result_list.append(temp_dict)
           
   maintanance_jobs_df = pd.DataFrame(maintanance_jobs_result_list)
@@ -162,7 +236,7 @@ def maintanance_jobs_df_prepare():
   maintanance_jobs_df.to_csv('data/maintanance_jobs_df.csv')
   # print(maintanance_jobs_df.info())
   return maintanance_jobs_df
-# maintanance_jobs_df_prepare()
+maintanance_jobs_df_prepare()
  
 
 # заполняем календарный фонд по оборудованию
