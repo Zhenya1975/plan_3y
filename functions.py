@@ -94,12 +94,12 @@ def eo_job_catologue():
 
 
   eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code_id']
-  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','go_interval', 'operation_start_date']].reset_index(drop=True)
-  # eo_maintanance_plan_df['last_maintanance_date'] = '31.12.2022'
-  eo_maintanance_job_code_last_date = pd.read_csv('data/eo_maintanance_job_code_last_date.csv')
-  eo_maintanance_plan_last_date_df = pd.merge(eo_maintanance_plan_df, eo_maintanance_job_code_last_date, on = 'eo_maintanance_job_code', how = 'left')
+  eo_maintanance_plan_df['last_maintanance_date'] = initial_values.last_maintanance_date
+  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','go_interval', 'operation_start_date', 'last_maintanance_date']].reset_index(drop=True)
   
+ 
   
+
   eo_maintanance_plan_df.to_csv('data/eo_job_catologue.csv', index=False)
   return eo_maintanance_plan_df
 eo_job_catologue()
@@ -120,16 +120,10 @@ def maintanance_jobs_df_prepare():
   eo_maint_plan = pd.read_csv('data/eo_job_catologue.csv', dtype = str)
   eo_maint_plan["downtime_planned"] = eo_maint_plan["downtime_planned"].astype('float')
   
-  # читаем файл с датой проведения последней формы на машине. Исходим из того, что все даты должны быть записаны в этом файле
-  eo_maintanance_job_code_last_date = pd.read_csv('data/eo_maintanance_job_code_last_date.csv', dtype = str)
-
-  # джойним eo_job_catologue с датами проведения последней формы
-  eo_maint_plan_with_dates = pd.merge(eo_maint_plan, eo_maintanance_job_code_last_date, on = 'eo_maintanance_job_code', how = 'left')
-
   # выдергиваем из full_eo_list колонки, которые нужны
   full_eo_list_selected = full_eo_list.loc[:, ['eo_code', 'avearage_day_operation_hours']]
   # джойним с full_eo_list
-  eo_maint_plan_with_dates_with_full_eo_list = pd.merge(eo_maint_plan_with_dates, full_eo_list_selected, on = 'eo_code', how = 'left')
+  eo_maint_plan_with_dates_with_full_eo_list = pd.merge(eo_maint_plan, full_eo_list_selected, on = 'eo_code', how = 'left')
   eo_maint_plan = eo_maint_plan_with_dates_with_full_eo_list
 
   eo_maint_plan.to_csv('data/eo_maint_plan_delete.csv')
@@ -231,7 +225,7 @@ def maintanance_jobs_df_prepare():
       
           
   maintanance_jobs_df = pd.DataFrame(maintanance_jobs_result_list)
-  # maintanance_jobs_df['maintanance_date'] = maintanance_jobs_df['maintanance_date'].astype(str)
+  maintanance_jobs_df['maintanance_date'] = maintanance_jobs_df['maintanance_date'].astype(str)
 
   maintanance_jobs_df.to_csv('data/maintanance_jobs_df.csv')
 

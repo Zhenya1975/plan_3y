@@ -1,7 +1,9 @@
 import pandas as pd
 
+
 full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
 
+last_maintanance_date = '31.12.2022'
 
 first_day_of_selection = pd.to_datetime('01.01.2023', format='%d.%m.%Y')
 last_day_of_selection = pd.to_datetime('01.01.2026', format='%d.%m.%Y')
