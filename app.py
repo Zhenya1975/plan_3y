@@ -177,11 +177,17 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
     eo_filter_list = eo_full_list
   else:
     eo_filter_list = checklist_eo
-
+  
+  if maintanance_category_checklist != None:
+    maint_category_list = maintanance_category_checklist
+  elif maintanance_category_checklist == None:
+    maint_category_list = functions.maintanance_category_filter(maintanance_jobs_df)[1]
+    
   # eo_filter_list - фильтр по машинам  
   # level_upper_filter_list - фильтр по Вышестоящему техместу
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_filter_list) &
-  maintanance_jobs_df['level_upper'].isin(level_upper_filter_list)
+  maintanance_jobs_df['level_upper'].isin(level_upper_filter_list) &
+  maintanance_jobs_df['maintanance_category_id'].isin(maint_category_list)
   ]
 
 
@@ -401,8 +407,11 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
   maintanance_category_checklist_data = functions.maintanance_category_filter(maintanance_jobs_df)[0]
   
   # если в чек-листе что-то выбрано, то значения равны выбору
+  if maintanance_category_checklist != None:
+    maint_category_list_value = maintanance_category_checklist
+  elif maintanance_category_checklist == None:
+    maint_category_list_value = functions.maintanance_category_filter(maintanance_jobs_df)[1]
   
-  maint_category_list_value  = [] 
   maint_category_list_options = maintanance_category_checklist_data
 
 
