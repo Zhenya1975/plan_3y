@@ -126,9 +126,12 @@ app.layout = dbc.Container(
 
 
     Output('planned_downtime', 'figure'),
+    Output('planned_downtime_piechart', 'figure'),
     Output('ktg_by_years', 'figure'),
     Output('ktg_by_month', 'figure'),
     Output('ktg_by_weeks', 'figure'),
+
+  
     Output('loading', 'parent_style'),
 ],
     [
@@ -256,6 +259,20 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
     template=graph_template,
     )
 
+  ############# PIECHART ПРОСТОИ ПО КАТЕГОРИЯМ #####################
+  # список категорий 
+  maintanance_category_id_list = maintanance_jobs_df['maintanance_category_id'].unique()
+  
+  maint_categ = maintanance_jobs_df.groupby('maintanance_category_id', as_index=False)['dowtime_plan, hours'].sum()
+  print(maint_categ)
+  labels = ['Oxygen','Hydrogen','Carbon_Dioxide','Nitrogen']
+  values = [4500, 2500, 1053, 500]
+  
+  planned_downtime_piechart = go.Figure(data=[go.Pie(labels=labels, values=values, textinfo='label+percent',
+                             insidetextorientation='radial'
+                            )])
+  
+  
   ################# График КТГ по годам ###############################
 
   maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
@@ -461,11 +478,14 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
 
   cal_fond_2023 = 'Общий календарный фонд ,час: {}'.format(cal_fond_2023_sum)
 
+  
+
+  
   new_loading_style = loading_style
 
   
   
-  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks, new_loading_style
+  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks, new_loading_style
 
 
 ########## Настройки################

@@ -109,9 +109,19 @@ def maintanance_chart_tab():
                               
                               )
                         ]),
+                       dbc.Row([
+                          dbc.Col(width=8,
+                            children=[
+                              html.P(),
+                              dcc.Graph(id='planned_downtime', config={'displayModeBar': False}),
+                            ]),
+                         dbc.Col(width=4,
+                            children=[
+                              html.P(),
+                              dcc.Graph(id='planned_downtime_piechart', config={'displayModeBar': False}),
+                            ])
+                       ]),
                        
-                       html.P(),
-                       dcc.Graph(id='planned_downtime', config={'displayModeBar': False}),
                        html.Hr(),
                        html.P(),
                        dcc.Graph(id='ktg_by_years', config={'displayModeBar': False}),
