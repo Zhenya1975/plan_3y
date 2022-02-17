@@ -33,8 +33,11 @@ dbc_css = (
     "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates@V1.0.1/dbc.min.css"
 )
 
+
+
 ############ подготовка таблицы со списком работ ####################
 def fig_table_maintanance(maintanance_jobs_df):
+  maintanance_jobs_df_temp = maintanance_jobs_df
   # выбираем поля из full_eo_list
   eo_list_df = initial_values.full_eo_list.loc[:, ['eo_code', 'eo_description', 'level_upper', 'operation_start_date', 'avearage_day_operation_hours']]
   # джойним maintanance_jobs_df с eo_list
@@ -57,6 +60,6 @@ def fig_table_maintanance(maintanance_jobs_df):
   result_table = result_table.loc[:, ['Дата', 'Категория работ','Запланированный простой, час', 'Межсервисная наработка, час', 'Наименование ЕО', 'Межсервисный интервал', 'Список форм с учетом поглащения', 'Кол-во дней между формами', 'Дата следующей формы']]
 
   
-  result_table.to_csv('data/result_table_delete.csv')
+  result_table.to_csv('data/downtime_data_table.csv', index=False)
   
-  return result_table
+  return result_table, maintanance_jobs_df_temp

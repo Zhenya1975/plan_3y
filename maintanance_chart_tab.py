@@ -162,7 +162,8 @@ def maintanance_chart_tab():
             #dbc.Row([
                 
             #]),
-        
+        # dcc.Store stores the intermediate value
+        dcc.Store(id='intermediate-value'),
         ]
     )
     return maintanance_chart_tab_block

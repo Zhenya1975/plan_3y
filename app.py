@@ -111,6 +111,7 @@ app.layout = dbc.Container(
 
 ######################### ОСНОВНОЙ ОБРАБОТЧИК ДЛЯ ПОСТРОЕНИЯ ГРАФИКОВ ##############################
 @app.callback([
+    
     Output("checklist_main_eo_class", "value"),
     Output("checklist_main_eo_class", "options"),
   
@@ -450,7 +451,8 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
   
   new_loading_style = loading_style
 
-  
+  # подготовка файла для выгрузки excel с простоями
+  fig_table_maintanance.fig_table_maintanance(maintanance_jobs_df)
   
   return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks,  new_loading_style
 
@@ -623,14 +625,15 @@ def download_eo_job_catologue(n_clicks):
       return dcc.send_data_frame(df.to_excel, "eo_job_catologue.xlsx", index=False, sheet_name="eo_job_catologue")
 
 # Обработчик кнопки выгрузки в эксель таблицы с простоями
-#@app.callback(
-#    Output("download_excel_downtime_table", "data"),
-#    Input("btn_download_downtime_table", "n_clicks"),
-#    prevent_initial_call=True,)
-#def funct(n_clicks_downtime_table):
-#    if n_clicks_downtime_table:
-#        df = fig_table_maintanance.
-#        return dcc.send_data_frame(df.to_excel, "список_ео.xlsx", index=False, sheet_name="список_ео")
+@app.callback(
+    Output("download_excel_downtime_table", "data"),
+    Input("btn_download_downtime_table", "n_clicks"),
+    prevent_initial_call=True,)
+def funct(n_clicks_downtime_table):
+  df = pd.read_csv('data/downtime_data_table.csv')
+  if n_clicks_downtime_table:
+    return dcc.send_data_frame(df.to_excel, "данные о простоях.xlsx", index=False, sheet_name="данные о простоях")
+  
 
 
 if __name__ == "__main__":
