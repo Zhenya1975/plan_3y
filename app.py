@@ -144,10 +144,13 @@ app.layout = dbc.Container(
         Input('checklist_main_eo_class', 'value'),
         Input('checklist_eo', 'value'),
         Input('maintanance_category_checklist', 'value'),
+
         
     ],
 )
+
 def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintanance_category_checklist, checklist_level_1, theme_selector, checklist_main_eo_class, checklist_eo, maintanance_category_checklist):
+  
   changed_id = [p['prop_id'] for p in callback_context.triggered][0]
   if theme_selector:
       graph_template = 'sandstone'
@@ -443,10 +446,13 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
 
   fig_downtime = fig_downtime_by_years.fig_downtime_by_years(maintanance_jobs_df, theme_selector)
 
-  fig_table_maintanance_ = fig_table_maintanance.fig_table_maintanance(maintanance_jobs_df, theme_selector)
-
+  
+  
   new_loading_style = loading_style
-  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks, new_loading_style
+
+  
+  
+  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks,  new_loading_style
 
 
 ########## Настройки################
@@ -615,6 +621,17 @@ def download_eo_job_catologue(n_clicks):
       df = pd.merge(df_catalogue, df_dates, on = 'eo_maintanance_job_code', how = 'left')
       # df = df.astype({'level_no': int})
       return dcc.send_data_frame(df.to_excel, "eo_job_catologue.xlsx", index=False, sheet_name="eo_job_catologue")
+
+# Обработчик кнопки выгрузки в эксель таблицы с простоями
+#@app.callback(
+#    Output("download_excel_downtime_table", "data"),
+#    Input("btn_download_downtime_table", "n_clicks"),
+#    prevent_initial_call=True,)
+#def funct(n_clicks_downtime_table):
+#    if n_clicks_downtime_table:
+#        df = fig_table_maintanance.
+#        return dcc.send_data_frame(df.to_excel, "список_ео.xlsx", index=False, sheet_name="список_ео")
+
 
 if __name__ == "__main__":
     # app.run_server(debug=True)
