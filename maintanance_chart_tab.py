@@ -110,12 +110,12 @@ def maintanance_chart_tab():
                               )
                         ]),
                        dbc.Row([
-                          dbc.Col(width=8,
+                          dbc.Col(width=7,
                             children=[
                               html.P(),
                               dcc.Graph(id='planned_downtime', config={'displayModeBar': False}),
                             ]),
-                         dbc.Col(width=4,
+                         dbc.Col(width=5,
                             children=[
                               html.P(),
                               dcc.Graph(id='planned_downtime_piechart', config={'displayModeBar': False}),

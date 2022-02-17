@@ -1,11 +1,12 @@
 import pandas as pd
 # import numpy as np
-from dash import Dash, dcc, html, Input, Output, callback_context, State
+from dash import Dash, dcc, html, Input, Output, callback_context, State, callback_context
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import ThemeSwitchAIO
 from dash_bootstrap_templates import load_figure_template
 import datetime
 import functions
+import fig_downtime_by_years
 
 
 import maintanance_chart_tab
@@ -135,6 +136,8 @@ app.layout = dbc.Container(
     Output('loading', 'parent_style'),
 ],
     [
+        Input('select_all_maintanance_category_checklist', 'n_clicks'),
+        Input('release_all_maintanance_category_checklist', 'n_clicks'),
         Input('checklist_level_1', 'value'),
         Input(ThemeSwitchAIO.ids.switch("theme"), "value"),
         Input('checklist_main_eo_class', 'value'),
@@ -143,7 +146,14 @@ app.layout = dbc.Container(
         
     ],
 )
-def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, checklist_eo, maintanance_category_checklist):
+def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintanance_category_checklist, checklist_level_1, theme_selector, checklist_main_eo_class, checklist_eo, maintanance_category_checklist):
+  changed_id = [p['prop_id'] for p in callback_context.triggered][0]
+  if theme_selector:
+      graph_template = 'sandstone'
+  # bootstrap
+
+  else:
+      graph_template = 'plotly_dark'
   # читаем список работ с простоями
   maintanance_jobs_full_df = pd.read_csv('data/maintanance_jobs_df.csv', dtype = str)
   maintanance_jobs_full_df = maintanance_jobs_full_df.astype({'dowtime_plan, hours': float, 'eo_code': str})
@@ -181,20 +191,6 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
   else:
     eo_filter_list = checklist_eo
   
-  if maintanance_category_checklist != None:
-    maint_category_list = maintanance_category_checklist
-  elif maintanance_category_checklist == None:
-    maint_category_list = functions.maintanance_category_filter(maintanance_jobs_df)[1]
-    
-  # eo_filter_list - фильтр по машинам  
-  # level_upper_filter_list - фильтр по Вышестоящему техместу
-  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_filter_list) &
-  maintanance_jobs_df['level_upper'].isin(level_upper_filter_list) &
-  maintanance_jobs_df['maintanance_category_id'].isin(maint_category_list)
-  ]
-
-
-  
 
   
   # читаем календарный фонд
@@ -228,50 +224,21 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
   maintanance_jobs_df = maintanance_jobs_df.copy()
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
 
-  ################# График простоев по месяцам ###############################
-  downtime_y = maintanance_jobs_df['dowtime_plan, hours']
-  dates_x = maintanance_jobs_df['maintanance_datetime']
-  if theme_selector:
-      graph_template = 'sandstone'
-  # bootstrap
-
-  else:
-      graph_template = 'plotly_dark'
-
-  # fig = go.Figure([go.Bar(x=dates_x, y=downtime_y)])
-  fig_downtime = go.Figure()
-  fig_downtime.add_trace(go.Bar(
-    name="Простои",
-    x=dates_x, y=downtime_y,
-    xperiod="M1",
-    # xperiodalignment="middle",
-    textposition='auto'
-    ))
-  new_year_2022_2023 = pd.to_datetime('01.01.2024', format='%d.%m.%Y')
-  new_year_2023_2024 = pd.to_datetime('01.01.2025', format='%d.%m.%Y')
-  fig_downtime.add_vline(x=new_year_2022_2023, line_width=3, line_color="green")
-  fig_downtime.add_vline(x=new_year_2023_2024, line_width=3, line_color="green")
-
-  fig_downtime.update_xaxes(showgrid=True, ticklabelmode="period")
-  #fig.update_traces(textposition='auto')
-  fig_downtime.update_layout(
-    title_text='Запланированный простой по месяцам за 3 года, час',
-    template=graph_template,
-    )
+  
 
   ############# PIECHART ПРОСТОИ ПО КАТЕГОРИЯМ #####################
-  # список категорий 
-  maintanance_category_id_list = maintanance_jobs_df['maintanance_category_id'].unique()
   
   maint_categ = maintanance_jobs_df.groupby('maintanance_category_id', as_index=False)['dowtime_plan, hours'].sum()
-  print(maint_categ)
-  labels = ['Oxygen','Hydrogen','Carbon_Dioxide','Nitrogen']
-  values = [4500, 2500, 1053, 500]
   
-  planned_downtime_piechart = go.Figure(data=[go.Pie(labels=labels, values=values, textinfo='label+percent',
-                             insidetextorientation='radial'
-                            )])
+  labels = list(maint_categ['maintanance_category_id'])
+  values = list(maint_categ['dowtime_plan, hours'])
   
+  planned_downtime_piechart = go.Figure(data=[go.Pie(labels=labels, values=values)])
+  planned_downtime_piechart.update_layout(
+    title_text='Простой по видам работ',
+    template=graph_template,
+    
+    )
   
   ################# График КТГ по годам ###############################
 
@@ -422,13 +389,35 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
 
   #### чек-лист для фильтра по типам работ ##################
   maintanance_category_checklist_data = functions.maintanance_category_filter(maintanance_jobs_df)[0]
-  
+    
+  # maintanance_category_checklist - из инпута функции. Значение в селектах
   # если в чек-листе что-то выбрано, то значения равны выбору
   if maintanance_category_checklist != None:
+    maint_category_list = maintanance_category_checklist
+    '''maint_category_list - фильтр для фильтрации maintanance_jobs_df'''
     maint_category_list_value = maintanance_category_checklist
+    '''maint_category_list_value - фильтр для Output основного колбэка'''
   elif maintanance_category_checklist == None:
+    maint_category_list = functions.maintanance_category_filter(maintanance_jobs_df)[1]
     maint_category_list_value = functions.maintanance_category_filter(maintanance_jobs_df)[1]
-  
+
+
+  # Обработчик кнопок Снять / Выбрать
+  id_select_all_maintanance_category = "select_all_maintanance_category_checklist"
+  id_release_all_maintanance_category = "release_all_maintanance_category_checklist"
+
+  if id_select_all_maintanance_category in changed_id:
+      maint_category_list_value = functions.maintanance_category_filter(maintanance_jobs_df)[1]
+      maint_category_list = functions.maintanance_category_filter(maintanance_jobs_df)[1]
+  elif id_release_all_maintanance_category in changed_id:
+      maint_category_list_value = []
+      maint_category_list = []
+  # eo_filter_list - фильтр по машинам  
+  # level_upper_filter_list - фильтр по Вышестоящему техместу
+  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_filter_list) &
+  maintanance_jobs_df['level_upper'].isin(level_upper_filter_list) &
+  maintanance_jobs_df['maintanance_category_id'].isin(maint_category_list)
+  ]
   maint_category_list_options = maintanance_category_checklist_data
 
 
@@ -483,7 +472,8 @@ def maintanance(checklist_level_1, theme_selector, checklist_main_eo_class, chec
   
   new_loading_style = loading_style
 
-  
+
+  fig_downtime = fig_downtime_by_years.fig_downtime_by_years(maintanance_jobs_df, theme_selector)
   
   return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks, new_loading_style
 
