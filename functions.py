@@ -3,8 +3,10 @@ from datetime import timedelta
 import datetime
 import initial_values
 
-full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
-full_eo_list['avearage_day_operation_hours'] = 23.5
+full_eo_list = initial_values.full_eo_list
+# full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
+#full_eo_list['avearage_day_operation_hours'] = 22.5
+#full_eo_list.to_csv('data/full_eo_list_actual.csv',index = False)
 # даты начала и конца трехлетнего периода
 first_day_of_selection = pd.to_datetime('01.01.2023', format='%d.%m.%Y')
 last_day_of_selection = pd.to_datetime('01.01.2026', format='%d.%m.%Y')

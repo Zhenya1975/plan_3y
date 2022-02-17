@@ -6,8 +6,9 @@ from dash_bootstrap_templates import ThemeSwitchAIO
 from dash_bootstrap_templates import load_figure_template
 import datetime
 import functions
+import title_text
 import fig_downtime_by_years
-
+import fig_table_maintanance
 
 import maintanance_chart_tab
 import settings_tab
@@ -420,61 +421,30 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
   ]
   maint_category_list_options = maintanance_category_checklist_data
 
-
   ######################## титульный текст из КАКИХ БЕ машины в выборке #######################
-  eo_list_with_filters_df = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'], dtype = str)
-  
-  # джойним со списком машин
-  full_eo_list = initial_values.full_eo_list
-  eo_list_with_filters_data_df = pd.merge(eo_list_with_filters_df, full_eo_list, on='eo_code', how='left')
-  # джойним с текстом наименований бизнес-единиц
-  level_1 = pd.read_csv('data/level_1.csv', dtype = str)
-  eo_list_with_filters_data_level_1_df = pd.merge(eo_list_with_filters_data_df, level_1, on = 'level_1', how = 'left')
-  # print(eo_list_with_filters_data_level_1_df)
-  # список бизнес единиц:
-  be_list = eo_list_with_filters_data_level_1_df['level_1_description'].unique()
-  # print(be_list)
-  text_be= ''
-  for word in be_list:
-    text_be = text_be + word + ' '
-
-  be_title = 'БЕ: {}'.format(text_be)
-  
+  be_title = title_text.title_text(maintanance_jobs_df)[0]
   ######################## титульный текст level_upper в выборке #######################
-  # список уникальных level_upper в выборке
-  level_upper_current_unique_df = pd.DataFrame(eo_list_with_filters_data_df['level_upper'].unique(), columns = ['level_upper'])
-  
-  level_upper_df = pd.read_csv('data/level_upper.csv')
-  level_upper_with_filters_data_level_upper_df = pd.merge(level_upper_current_unique_df, level_upper_df, on = 'level_upper', how = 'left')
-  level_upper_title_list = level_upper_with_filters_data_level_upper_df['Название технического места'].unique()
-  text_level_upper= ''
-  for word in level_upper_title_list:
-    text_level_upper = text_level_upper + word + ' '
+  level_upper_title =  title_text.title_text(maintanance_jobs_df)[1]
+  ######################## титульный текст кол-во машин в выборке #######################
+  number_of_eo_title = title_text.title_text(maintanance_jobs_df)[2]
 
-  level_upper_title = 'Вшст. техместо: {}'.format(text_level_upper)
-  
-  number_of_eo = len(maintanance_jobs_df['eo_code'].unique())
-  number_of_eo_title = 'Кол-во EO в выборке: {}'.format(number_of_eo)
-  
+  ######################## Карточка за 2023 год #######################
   maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
-  #print(maintanance_jobs_df['year'])
+
   downtime_2023 = int(maintanance_jobs_df.loc[maintanance_jobs_df['year'] == 2023]['dowtime_plan, hours'].sum())
 
   downtime_2023 = 'Общий простой ,час: {}'.format(downtime_2023)
   
   cal_fond_2023_sum = int(eo_calendar_fond.loc[eo_calendar_fond['year']==2023]['calendar_fond'].sum())
 
-
   cal_fond_2023 = 'Общий календарный фонд ,час: {}'.format(cal_fond_2023_sum)
-
-  
-
-  
-  new_loading_style = loading_style
 
 
   fig_downtime = fig_downtime_by_years.fig_downtime_by_years(maintanance_jobs_df, theme_selector)
-  
+
+  fig_table_maintanance_ = fig_table_maintanance.fig_table_maintanance(maintanance_jobs_df, theme_selector)
+
+  new_loading_style = loading_style
   return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks, new_loading_style
 
 
