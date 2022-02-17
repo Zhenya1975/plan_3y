@@ -157,6 +157,7 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
       graph_template = 'plotly_dark'
   # читаем список работ с простоями
   maintanance_jobs_full_df = pd.read_csv('data/maintanance_jobs_df.csv', dtype = str)
+  full_maintanance_jobs_full_df = maintanance_jobs_full_df
   maintanance_jobs_full_df = maintanance_jobs_full_df.astype({'dowtime_plan, hours': float, 'eo_code': str})
   
   # поле даты - в datetime
@@ -214,7 +215,7 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
   eo_downtime = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'], dtype = str)
   # делаем пересечение этих списков.
   eo_for_ktg = pd.merge(eo_cal_fond, eo_downtime, on = 'eo_code', how = 'inner')['eo_code'].unique()
-  # print('eo_for_ktg', eo_for_ktg)
+
   # режем датафрейм с простоями по eo_for_ktg
   maintanance_jobs_df = maintanance_jobs_df.copy()
   
@@ -457,7 +458,7 @@ with open('default_values.json', 'r') as openfile:
   default_values_dict = json.load(openfile)
 
 default_to_start_date = default_values_dict['default_to_start_date']
-#print(type(default_to_start_date))
+
 default_to_start_date = datetime.datetime.strptime(default_to_start_date, '%Y-%m-%d')
 
 @app.callback([
@@ -502,7 +503,7 @@ def func_1(n_clicks):
 def parse_contents(contents, filename):
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
-    print('filename: ', filename)
+
     try:
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
@@ -525,11 +526,9 @@ def parse_contents(contents, filename):
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
             # values = {"last_maintanance_date": default_to_start_date.date()}
-            # print('default_to_start_date: ', default_to_start_date)
-            #print(df.loc[df['last_maintanance_date']])
+
             #df.fillna(value=values)
   
-            # print(df.info())
             updated_eo_maintanance_job_code_last_date = df.loc[:, ['eo_maintanance_job_code', 'last_maintanance_date']]
             
             functions.fill_calendar_fond()

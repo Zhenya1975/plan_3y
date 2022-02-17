@@ -1,20 +1,27 @@
-,maintanance_category_id,maintanance_name
-0,eto,ЕТО
-1,to250,ТО-250
-2,to500,ТО-500
-3,to1000,ТО-1000
-4,to1500,ТО-1500
-5,to2000,ТО-2000
-6,to2500,ТО-2500
-7,to4000,ТО-4000
-8,to5000,ТО-5000
-9,to8000,ТО-8000
-10,to10000,ТО-10000
-11,tr,ТР
-12,eng_overhaul,Кдвс (Замена)
-13,gen_overhaul,Кген(Замена)
-14,kmk_overhaul,Кмк (Замена)
-15,tr_mo,ТРмо (Замена)
-16,tr_susp,ТР Подвески
-17,lining_partitial,СВч (частичная футеровка)
-18,lining_full,СВп (полная футеровка)
+maintanance_category_id,maintanance_name
+eto,ЕТО
+to250,ТО-250
+to500,ТО-500
+to1000,ТО-1000
+to1500,ТО-1500
+to2000,ТО-2000
+to2500,ТО-2500
+to4000,ТО-4000
+to5000,ТО-5000
+to6000,ТО-6000
+to8000,ТО-8000
+to10000,ТО-10000
+tr,ТР
+eng_overhaul,Кдвс (Замена)
+gen_overhaul,Кген(Замена)
+kmk_overhaul,Кмк (Замена)
+tr_mo,ТРмо (Замена)
+tr_susp,ТР Подвески
+lining_partitial,СВч (частичная футеровка)
+lining_full,СВп (полная футеровка)
+to6000 ,ТО-6000
+to12000,ТО-12000
+to_suppl_systems,То доп систем
+tr_middle,ТР средний
+overhaul_total,Капремонт
+tr_suppl_systems,ТР доп.систем

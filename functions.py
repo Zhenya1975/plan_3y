@@ -419,15 +419,17 @@ def maintanance_category_filter(df):
   
   # уникальные значения maintanance_category_id из текущей выборки df
   maintanance_category_id_list = pd.DataFrame(df['maintanance_category_id'].unique(), columns = ['maintanance_category_id'])
+  
   maintanance_category_full_df = pd.read_csv('data/maintanance_category.csv')
   
   
   
   maintanance_category_df = pd.merge(maintanance_category_id_list, maintanance_category_full_df, on = 'maintanance_category_id', how = 'left')
-  #maintanance_category_checklist_data = []
+  
+  
   maintanance_category_list = []
   maintanance_category_checklist_data = []
-  for index, row in maintanance_category_full_df.iterrows():
+  for index, row in maintanance_category_df.iterrows():
       dict_temp = {}
       dict_temp['label'] = " " + row['maintanance_name']
       dict_temp['value'] = row['maintanance_category_id']
