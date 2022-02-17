@@ -109,7 +109,10 @@ def maintanance_chart_tab():
                               
                               )
                         ]),
-                       dbc.Row([
+                      html.Hr(),
+                      html.Div(
+                        dbc.Row([
+                      
                           dbc.Col(width=7,
                             children=[
                               html.P(),
@@ -121,6 +124,9 @@ def maintanance_chart_tab():
                               dcc.Graph(id='planned_downtime_piechart', config={'displayModeBar': False}),
                             ])
                        ]),
+                      # style={"background-color": "#ABBAEA"},
+                      ), 
+                      
                        
                        html.Hr(),
                        html.P(),

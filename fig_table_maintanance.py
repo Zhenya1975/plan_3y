@@ -44,11 +44,17 @@ def fig_table_maintanance(maintanance_jobs_df, theme_selector):
   maintanance_jobs_df = maintanance_jobs_df.astype({'interval_motohours': float})
   maintanance_jobs_df = maintanance_jobs_df.astype({'interval_motohours': int})
   
-  result_table = maintanance_jobs_df.loc[:, ['maintanance_datetime', 'maintanance_name','dowtime_plan, hours','interval_motohours', 'eo_description']]  
+  result_table = maintanance_jobs_df.loc[:, ['maintanance_datetime', 'maintanance_name','dowtime_plan, hours','interval_motohours', 'eo_description', 'maint_interval', 'go_interval_list', 'days_between_maintanance', 'next_maintanance_datetime']]  
   result_table['Дата'] = result_table['maintanance_datetime'].dt.strftime('%d.%m.%Y')
+  
+  # result_table['next_maintanance_datetime'] = result_table['next_maintanance_datetime'].dt.strftime('%d.%m.%Y')
 
-  result_table.rename(columns = {'maintanance_name': 'Категория работ', 'dowtime_plan, hours': 'Запланированный простой, час', 'interval_motohours': 'Межсервисная наработка, час', 'eo_description':'Наименование ЕО'}, inplace = True)
-  result_table = result_table.loc[:, ['Дата', 'Категория работ','Запланированный простой, час', 'Межсервисная наработка, час', 'Наименование ЕО']]
+  
+  # result_table = result_table.astype({'days_between_maintanance': int})
+
+  result_table.rename(columns = {'maintanance_name': 'Категория работ', 'dowtime_plan, hours': 'Запланированный простой, час', 'interval_motohours': 'Межсервисная наработка, час', 'eo_description':'Наименование ЕО', 'maint_interval':'Межсервисный интервал', 'go_interval_list': 'Список форм с учетом поглащения', 'days_between_maintanance': 'Кол-во дней между формами','next_maintanance_datetime':'Дата следующей формы'}, inplace = True)
+  
+  result_table = result_table.loc[:, ['Дата', 'Категория работ','Запланированный простой, час', 'Межсервисная наработка, час', 'Наименование ЕО', 'Межсервисный интервал', 'Список форм с учетом поглащения', 'Кол-во дней между формами', 'Дата следующей формы']]
 
   
   result_table.to_csv('data/result_table_delete.csv')

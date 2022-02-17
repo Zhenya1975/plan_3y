@@ -206,10 +206,9 @@ def maintanance_jobs_df_prepare():
         next_maintanance_datetime = maintanance_datetime + timedelta(hours=calendar_interval_between_maint) + timedelta(hours = plan_downtime)
         days_between_maintanance = next_maintanance_datetime - maintanance_datetime
         days_between_maintanance = days_between_maintanance
-        days_between_maintanance_1 = int(days_between_maintanance.days)
   
-        temp_dict['days_between_maintanance'] = days_between_maintanance_1
-        temp_dict['next_maintanance_datetime'] = maintanance_datetime
+        temp_dict['days_between_maintanance'] = days_between_maintanance
+        temp_dict['next_maintanance_datetime'] = next_maintanance_datetime
         
         maintanance_jobs_result_list.append(temp_dict)
         maintanance_datetime = next_maintanance_datetime
@@ -253,7 +252,16 @@ def maintanance_jobs_df_prepare():
         temp_dict['maint_interval'] =  maintanance_interval_temp
         temp_dict['pass_interval_list'] = pass_interval
         temp_dict['go_interval_list'] = go_interval
+
+        next_maintanance_datetime = maintanance_datetime + timedelta(hours=calendar_interval_between_maint) + timedelta(hours = plan_downtime)
+        days_between_maintanance = next_maintanance_datetime - maintanance_datetime
+     
+  
+        temp_dict['days_between_maintanance'] = days_between_maintanance
+        temp_dict['next_maintanance_datetime'] = next_maintanance_datetime
+        
         maintanance_jobs_result_list.append(temp_dict)
+        maintanance_datetime = next_maintanance_datetime
 
       
           
