@@ -48,7 +48,9 @@ def fig_table_maintanance(maintanance_jobs_df, theme_selector):
   result_table['Дата'] = result_table['maintanance_datetime'].dt.strftime('%d.%m.%Y')
 
   result_table.rename(columns = {'maintanance_name': 'Категория работ', 'dowtime_plan, hours': 'Запланированный простой, час', 'interval_motohours': 'Межсервисная наработка, час', 'eo_description':'Наименование ЕО'}, inplace = True)
-  result_table = result_table.loc[:, ['Дата', 'Категория работ','Запланированный простой, час', 'Межсервисная наработка, час']]
+  result_table = result_table.loc[:, ['Дата', 'Категория работ','Запланированный простой, час', 'Межсервисная наработка, час', 'Наименование ЕО']]
 
+  
+  result_table.to_csv('data/result_table_delete.csv')
   
   # print(result_table)

@@ -202,10 +202,23 @@ def maintanance_jobs_df_prepare():
         remaining_hours = standard_interval_motohours - number_of_days_to_next_maint * avearage_day_operation_hours
         # календарный интервал между формами = кол-во суток х 24 + остаток
         calendar_interval_between_maint = number_of_days_to_next_maint *24 + remaining_hours
-        maintanance_datetime = maintanance_datetime + timedelta(hours=calendar_interval_between_maint) + timedelta(hours = plan_downtime)
-        maintanance_jobs_result_list.append(temp_dict)
-        temp_dict = {}
         
+        next_maintanance_datetime = maintanance_datetime + timedelta(hours=calendar_interval_between_maint) + timedelta(hours = plan_downtime)
+        days_between_maintanance = next_maintanance_datetime - maintanance_datetime
+        days_between_maintanance = days_between_maintanance
+        days_between_maintanance_1 = int(days_between_maintanance.days)
+  
+        temp_dict['days_between_maintanance'] = days_between_maintanance_1
+        temp_dict['next_maintanance_datetime'] = maintanance_datetime
+        
+        maintanance_jobs_result_list.append(temp_dict)
+        maintanance_datetime = next_maintanance_datetime
+        
+        
+        
+        
+        temp_dict = {}
+  
     # остаются записи, которые не ЕТО, и у которых есть поглащения форм.
     # для таких записей итерируемся по списку 'go interval'
     elif go_interval != 'not': 
