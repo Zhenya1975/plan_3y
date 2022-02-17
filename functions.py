@@ -89,7 +89,7 @@ def maintanance_category_prep():
   
   df_result = pd.DataFrame(maintanance_category_id_df_list)
   df_result.to_csv('data/maintanance_category.csv')
-# maintanance_category_prep()  
+maintanance_category_prep()  
 
 # справочник работ eo_job_catologue
 def eo_job_catologue():

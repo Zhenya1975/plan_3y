@@ -9,6 +9,7 @@ import functions
 import title_text
 import fig_downtime_by_years
 import fig_table_maintanance
+import fig_ktg_by_years
 
 import maintanance_chart_tab
 import settings_tab
@@ -208,11 +209,12 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
   
   # нужно порезать календарный фонд на те машины, которые есть в простоях
   # список машин который остался в простоях после фильтрации
-  eo_list_in_maintanance_jobs_df = maintanance_jobs_df['eo_code'].unique()
+  eo_list_in_maintanance_jobs_df = maintanance_jobs_full_df['eo_code'].unique()
 
   eo_calendar_fond = eo_calendar_fond.copy()
   eo_calendar_fond = eo_calendar_fond.loc[eo_calendar_fond['eo_code'].isin(eo_list_in_maintanance_jobs_df)]
-
+  eo_calendar_fond_full = eo_calendar_fond
+  
   # список ЕО, на которые есть календарный фонд
   eo_cal_fond = pd.DataFrame(eo_calendar_fond['eo_code'].unique(), columns = ['eo_code'], dtype = str)
   # список ЕО, на которые есть расчет простоев
@@ -243,52 +245,11 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
   planned_downtime_piechart.update_layout(
     title_text='Простой по видам работ',
     template=graph_template,
-    
     )
   
-  ################# График КТГ по годам ###############################
-
-  maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
-  eo_calendar_fond['year'] = eo_calendar_fond['datetime'].dt.year
-  # maintanance_jobs_df['year'].astype('str')
-  # x_years = ['2023', '2024', '2025']
-  x_years = [2023, 2024, 2025]
-  y_ktg = []
-  text_list = []
-  for year in x_years:
-    downtime_year_df = maintanance_jobs_df.loc[maintanance_jobs_df['year']==year]
-    
-    downtime_year = downtime_year_df['dowtime_plan, hours'].sum()
-    calendar_fond_year_df = eo_calendar_fond.loc[eo_calendar_fond['year'] == year]
-    
-    calendar_fond = calendar_fond_year_df['calendar_fond'].sum()
-    ktg_year = (calendar_fond - downtime_year) / calendar_fond
-    text = round(ktg_year, 2)
-    text_list.append(text)
-    y_ktg.append(ktg_year)
-  
-  fig_ktg_by_years = go.Figure()
-  fig_ktg_by_years.add_trace(go.Bar(
-    name="КТГ по годам за три года 2023-2025",
-    x=x_years, 
-    y=y_ktg,
-    # xperiodalignment="middle",
-    textposition='auto'
-    ))
-  fig_ktg_by_years.update_xaxes(type='category')
-  fig_ktg_by_years.update_yaxes(range = [0.5,1])  
-  fig_ktg_by_years.update_layout(
-    
-    title_text='КТГ по годам за три года 2023-2025',
-    template=graph_template,
-    )
-  fig_ktg_by_years.update_traces(
-    text = text_list,
-    textposition='auto'
-  )
-
-
   ################# График КТГ по месяцам ###############################
+  maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
+  eo_calendar_fond_full['year'] = eo_calendar_fond_full['datetime'].dt.year
   maintanance_jobs_df['month'] = maintanance_jobs_df['maintanance_datetime'].dt.month
   maintanance_jobs_df['month_year'] = maintanance_jobs_df['month'].astype('str') + "_"+ maintanance_jobs_df['year'].astype('str')
   eo_calendar_fond['month'] = eo_calendar_fond['datetime'].dt.month
@@ -379,7 +340,6 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
     textposition='auto'
   )
 
-
   ###################### данные для селектов фильтров по _main_eo_class ################
   checklist_main_eo_class_value  = []
   if checklist_main_eo_class != None:
@@ -446,15 +406,14 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
 
 
   fig_downtime = fig_downtime_by_years.fig_downtime_by_years(maintanance_jobs_df, theme_selector)
-
+  fig_ktg_by_yrs = fig_ktg_by_years.fig_ktg_by_years(maintanance_jobs_df, theme_selector, eo_calendar_fond_full)
   
   
   new_loading_style = loading_style
 
   # подготовка файла для выгрузки excel с простоями
   fig_table_maintanance.fig_table_maintanance(maintanance_jobs_df)
-  
-  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_years, fig_ktg_by_month, fig_ktg_by_weeks,  new_loading_style
+  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_yrs, fig_ktg_by_month, fig_ktg_by_weeks,  new_loading_style
 
 
 ########## Настройки################
@@ -520,11 +479,28 @@ def parse_contents(contents, filename):
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded),decimal=',')
             
-          
-            df.to_csv('data/maintanance_job_list_general.csv')
-            functions.pass_interval_fill()
-            functions.maintanance_category_prep()
-            functions.eo_job_catologue()
+
+            # проверяем, что в файле есть нужные колонки 
+            list_of_columns_in_uploaded_df = df.columns.tolist()
+            check_column_list = ['maintanance_code_id', 'maintanance_code', 'maintanance_category_id','upper_level_tehmesto_code', 'maintanance_name', 'interval_motohours', 'downtime_planned', 'pass_interval', 'source']
+            control_value = 1
+            
+            for column in check_column_list:
+              if column in list_of_columns_in_uploaded_df:
+                continue
+              else:
+                control_value = 0
+                print('column:', column)
+                break
+            print('control_value = ', control_value)
+            if control_value == 1:
+              print('все колонки на месте')
+              df.to_csv('data/maintanance_job_list_general.csv')
+              functions.pass_interval_fill()
+              functions.maintanance_category_prep()
+              functions.eo_job_catologue()
+            else:
+              print('не хватает колонок')
             
             # если мы загрузили список с работами, то надо подготовить данные для того чтобы вставить
             # даты начала расчета для ТО-шек
@@ -604,7 +580,7 @@ def update_output_(list_of_contents, list_of_names):
 def download_maintanance_job_list_general(n_clicks):
     if n_clicks:
       df = pd.read_csv('data/maintanance_job_list_general.csv', dtype=str)
-      df = df.loc[:, ['maintanance_code_id', 'maintanance_code',	'maintanance_name',	'upper_level_tehmesto_code',	'upper_level_tehmesto_description',	'interval_motohours',	'downtime_planned','pass_interval',	'source']]
+      df = df.loc[:, ['maintanance_code_id', 'maintanance_code',	'maintanance_category_id','maintanance_name',	'upper_level_tehmesto_code',	'upper_level_tehmesto_description',	'interval_motohours',	'downtime_planned','pass_interval',	'source']]
 
       df = df.astype({'downtime_planned': float, 'interval_motohours': float})
       return dcc.send_data_frame(df.to_excel, "maintanance_job_list_general.xlsx", index=False, sheet_name="maintanance_job_list_general")
