@@ -1,5 +1,6 @@
 ################# График КТГ по неделям 2023 ###############################
   maintanance_jobs_df_2023 = maintanance_jobs_df.loc[maintanance_jobs_df['year']==2023]
+
   maintanance_jobs_df_2023 = maintanance_jobs_df_2023.copy()
   maintanance_jobs_df_2023['week'] = maintanance_jobs_df_2023['maintanance_datetime'].dt.isocalendar().week
   

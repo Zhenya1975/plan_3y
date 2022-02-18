@@ -12,6 +12,8 @@ import fig_table_maintanance
 import fig_ktg_by_years
 import fig_planned_3y_ktg
 import fig_piechart_downtime_by_categories
+import ktg_by_month_models
+import ktg_table_html
 
 import maintanance_chart_tab
 import settings_tab
@@ -136,6 +138,7 @@ app.layout = dbc.Container(
     Output('ktg_by_years', 'figure'),
     Output('fig_ktg_3y_by_months_id', 'figure'),
     Output('loading', 'parent_style'),
+    Output('ktg_by_month_table', 'children'),
 ],
     [
         Input('select_all_maintanance_category_checklist', 'n_clicks'),
@@ -265,18 +268,20 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
   id_release_all_maintanance_category = "release_all_maintanance_category_checklist"
 
   if id_select_all_maintanance_category in changed_id:
-      maint_category_list_value = functions.maintanance_category_filter(maintanance_jobs_df)[1]
-      maint_category_list = functions.maintanance_category_filter(maintanance_jobs_df)[1]
+    maint_category_list_value = functions.maintanance_category_filter(maintanance_jobs_full_df)[1]
+    maint_category_list = functions.maintanance_category_filter(maintanance_jobs_full_df)[1]
   elif id_release_all_maintanance_category in changed_id:
-      maint_category_list_value = []
-      maint_category_list = []
+    print('нажата кнопка Снять выбор')  
+    maint_category_list_value = []
+    maint_category_list = []
   # eo_filter_list - фильтр по машинам  
   # level_upper_filter_list - фильтр по Вышестоящему техместу
-  maintanance_jobs_df_before_cut_by_maint_categories = maintanance_jobs_df
+  
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_filter_list) &
   maintanance_jobs_df['level_upper'].isin(level_upper_filter_list) &
   maintanance_jobs_df['maintanance_category_id'].isin(maint_category_list)
   ]
+  print('maintanance_jobs_df', len(maintanance_jobs_df))
   maint_category_list_options = maintanance_category_checklist_data
 
   ######################## титульный текст из КАКИХ БЕ машины в выборке #######################
@@ -317,13 +322,14 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
 
   # подготовка файла для выгрузки excel с простоями
   fig_table_maintanance.fig_table_maintanance(maintanance_jobs_df)
+
+  # выполнение скрипта подготовки таблицы ктг-месяц-модель-машины
+  ktg_df = ktg_by_month_models.ktg_by_month_models(maintanance_jobs_df, eo_calendar_fond, 2023)
+  ktg_by_month_table = ktg_table_html.ktg_table(ktg_df)
   
-  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_yrs, fig_ktg_3y_by_months, new_loading_style
+  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_yrs, fig_ktg_3y_by_months, new_loading_style, ktg_by_month_table
 
 ########## Настройки################
-
-
-
 
 @app.callback(
     Output("download_template", "data"),
@@ -480,7 +486,15 @@ def funct(n_clicks_downtime_table):
   if n_clicks_downtime_table:
     return dcc.send_data_frame(df.to_excel, "данные о простоях.xlsx", index=False, sheet_name="данные о простоях")
   
-
+# Обработчик кнопки выгрузки в эксель таблицы с ктг
+@app.callback(
+    Output("download_ktg_table", "data"),
+    Input("btn_download_ktg_table", "n_clicks"),
+    prevent_initial_call=True,)
+def funct(n_clicks_ktg_table):
+  df = pd.read_csv('data/ktg_by_months.csv')
+  if n_clicks_ktg_table:
+    return dcc.send_data_frame(df.to_excel, "ктг по месяцам.xlsx", index=False, sheet_name="ктг по месяцам")
 
 if __name__ == "__main__":
     # app.run_server(debug=True)

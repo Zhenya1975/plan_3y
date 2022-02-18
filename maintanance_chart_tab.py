@@ -9,7 +9,8 @@ def maintanance_chart_tab():
         label='КТГ',
         value='ktg',
         children=[
-            dcc.Loading(id='loading', parent_style=loading_style),
+           
+          dcc.Loading(id='loading', parent_style=loading_style),
             
             
             dbc.Row([
@@ -164,7 +165,34 @@ def maintanance_chart_tab():
                        html.P(),
                        dcc.Graph(id='ktg_by_years', config={'displayModeBar': False}),
                        html.Hr(),
-                       # html.P(),
+                       html.Div(
+                        dbc.Row([
+                      
+                          dbc.Col(width=12,
+                            children=[
+                              html.Div([
+                                html.P(),
+                                
+                                html.P(),
+                                dbc.Button("Выгрузить ктг.xlsx", id="btn_download_ktg_table", size="sm",
+                                           style={'marginBottom': '3px',
+                                                  'marginTop': '3px',
+                                                  'backgroundColor': '#232632'}, ),
+                                dcc.Download(id="download_ktg_table")
+                        ]),
+                              
+                            ]),
+                         
+                       ]),
+                      # style={"background-color": "#ABBAEA"},
+                      ),
+                       html.Div(id='ktg_by_month_table'), 
+
+
+
+
+                      
+                      # html.P(),
                        # dcc.Graph(id='ktg_by_month', config={'displayModeBar': False}),
                        # html.Hr(),
                        # html.P(),
@@ -177,6 +205,6 @@ def maintanance_chart_tab():
             #]),
         
        
-        ]
+          ]
     )
     return maintanance_chart_tab_block
