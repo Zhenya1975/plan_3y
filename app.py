@@ -11,6 +11,7 @@ import fig_downtime_by_years
 import fig_table_maintanance
 import fig_ktg_by_years
 import fig_planned_3y_ktg
+import fig_piechart_downtime_by_categories
 
 import maintanance_chart_tab
 import settings_tab
@@ -229,21 +230,7 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
   # режем датафрейм с календарным фондом  по eo_for_ktg
   # maintanance_jobs_df = maintanance_jobs_df.copy()
   # maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
-
-
-  ############# PIECHART ПРОСТОИ ПО КАТЕГОРИЯМ #####################
-  
-  maint_categ = maintanance_jobs_df.groupby('maintanance_category_id', as_index=False)['dowtime_plan, hours'].sum()
-  
-  labels = list(maint_categ['maintanance_category_id'])
-  values = list(maint_categ['dowtime_plan, hours'])
-  
-  planned_downtime_piechart = go.Figure(data=[go.Pie(labels=labels, values=values)])
-  planned_downtime_piechart.update_layout(
-    title_text='Простой по видам работ',
-    template=graph_template,
-    )
-  
+ 
 
   ###################### данные для селектов фильтров по _main_eo_class ################
   checklist_main_eo_class_value  = []
@@ -316,7 +303,11 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
 
   ################# ГРАФИК КТГ ПО МЕСЯЦАМ ЗА ТРИ ГОДА ##################################
   fig_ktg_3y_by_months = fig_planned_3y_ktg.fig_downtime_planned_3y_ktg(maintanance_jobs_df, eo_calendar_fond, theme_selector)
-  print(type(fig_ktg_3y_by_months))
+
+
+  ############# PIECHART ПРОСТОИ ПО КАТЕГОРИЯМ #####################
+  planned_downtime_piechart = fig_piechart_downtime_by_categories.fig_piechart_downtime_by_categories(maintanance_jobs_df, theme_selector)
+
   
   ################ ГРАФИК КТГ ПО ГОДАМ ЗА 3 ГОДА #######################################
   fig_ktg_by_yrs = fig_ktg_by_years.fig_ktg_by_years(maintanance_jobs_df, theme_selector, eo_calendar_fond)
@@ -328,8 +319,6 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
   fig_table_maintanance.fig_table_maintanance(maintanance_jobs_df)
   
   return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_yrs, fig_ktg_3y_by_months, new_loading_style
-
-  
 
 ########## Настройки################
 
