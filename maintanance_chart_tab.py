@@ -30,9 +30,6 @@ def maintanance_chart_tab():
                       dcc.Dropdown(id="checklist_main_eo_class", multi=True),
                   ]),
                     
-                    
-                    
-                    
                   
                   html.P(),
                     html.Div([
@@ -145,25 +142,41 @@ def maintanance_chart_tab():
                        ]),
                       # style={"background-color": "#ABBAEA"},
                       ), 
+                      #############################################################
+                      html.Div(
+                        dbc.Row([
                       
+                          dbc.Col(width=7,
+                            children=[
+                              html.P(),
+                              dcc.Graph(id='fig_ktg_3y_by_months_id', config={'displayModeBar': False}),
+                            ]),
+                         
+                       ]),
+                      # style={"background-color": "#ABBAEA"},
+                      ), 
+
+
+
+                      #############################################################
                        
                        html.Hr(),
                        html.P(),
                        dcc.Graph(id='ktg_by_years', config={'displayModeBar': False}),
                        html.Hr(),
-                       html.P(),
-                       dcc.Graph(id='ktg_by_month', config={'displayModeBar': False}),
-                       html.Hr(),
-                       html.P(),
-                       dcc.Graph(id='ktg_by_weeks', config={'displayModeBar': False}),
+                       # html.P(),
+                       # dcc.Graph(id='ktg_by_month', config={'displayModeBar': False}),
+                       # html.Hr(),
+                       # html.P(),
+                       # dcc.Graph(id='ktg_by_weeks', config={'displayModeBar': False}),
                     ]),
                 
             ]),
             #dbc.Row([
                 
             #]),
-        # dcc.Store stores the intermediate value
-        dcc.Store(id='intermediate-value'),
+        
+       
         ]
     )
     return maintanance_chart_tab_block

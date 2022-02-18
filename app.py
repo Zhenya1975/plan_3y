@@ -10,6 +10,7 @@ import title_text
 import fig_downtime_by_years
 import fig_table_maintanance
 import fig_ktg_by_years
+import fig_planned_3y_ktg
 
 import maintanance_chart_tab
 import settings_tab
@@ -132,10 +133,7 @@ app.layout = dbc.Container(
     Output('planned_downtime', 'figure'),
     Output('planned_downtime_piechart', 'figure'),
     Output('ktg_by_years', 'figure'),
-    Output('ktg_by_month', 'figure'),
-    Output('ktg_by_weeks', 'figure'),
-
-  
+    Output('fig_ktg_3y_by_months_id', 'figure'),
     Output('loading', 'parent_style'),
 ],
     [
@@ -146,12 +144,11 @@ app.layout = dbc.Container(
         Input('checklist_main_eo_class', 'value'),
         Input('checklist_eo', 'value'),
         Input('maintanance_category_checklist', 'value'),
-
         
     ],
 )
 
-def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintanance_category_checklist, checklist_level_1, theme_selector, checklist_main_eo_class, checklist_eo, maintanance_category_checklist):
+def maintanance(select_all_maintanance_category_checklist, release_all_maintanance_category_checklist, checklist_level_1, theme_selector, checklist_main_eo_class, checklist_eo, maintanance_category_checklist):
   
   changed_id = [p['prop_id'] for p in callback_context.triggered][0]
   if theme_selector:
@@ -162,7 +159,7 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
       graph_template = 'plotly_dark'
   # читаем список работ с простоями
   maintanance_jobs_full_df = pd.read_csv('data/maintanance_jobs_df.csv', dtype = str)
-  full_maintanance_jobs_full_df = maintanance_jobs_full_df
+
   maintanance_jobs_full_df = maintanance_jobs_full_df.astype({'dowtime_plan, hours': float, 'eo_code': str})
   
   # поле даты - в datetime
@@ -172,23 +169,21 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
   
   # Список работ до фильтрации в фильтрах. Из этого списка берем options_list в фильтре по EO
   maintanance_jobs_df = maintanance_jobs_full_df
+  
   ################### Фильтруем выборку фильтрами #############################
-
   level_upper_full_list_df = initial_values.full_eo_list.loc[:, ['eo_code', 'level_upper']]
   maintanance_jobs_df = maintanance_jobs_df.copy()
   maintanance_jobs_df = pd.merge(maintanance_jobs_df, level_upper_full_list_df, on = 'eo_code', how = 'left')
   level_upper_full_list = maintanance_jobs_df['level_upper'].unique()
-
+  
   if checklist_main_eo_class == None:
     level_upper_filter_list = level_upper_full_list
   elif checklist_main_eo_class == []:
     level_upper_filter_list = level_upper_full_list
   else:
     level_upper_filter_list =  checklist_main_eo_class
-
   
   maintanance_jobs_full_for_eo_filter_df = maintanance_jobs_df.loc[maintanance_jobs_df['level_upper'].isin(level_upper_filter_list)]
-
     
   eo_full_list = maintanance_jobs_full_for_eo_filter_df['eo_code'].unique()
   if checklist_eo == None:
@@ -198,8 +193,10 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
   else:
     eo_filter_list = checklist_eo
   
-
-  
+  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['level_upper'].isin(level_upper_filter_list)&
+  maintanance_jobs_df['eo_code'].isin(eo_filter_list)
+  ]
+    
   # читаем календарный фонд
   eo_calendar_fond = pd.read_csv('data/eo_calendar_fond.csv', dtype = str)
   eo_calendar_fond = eo_calendar_fond.astype({'calendar_fond': float})
@@ -208,31 +205,31 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
   # full_eo_list = pd.read_csv('data/full_eo_list.csv', dtype = str)
   
   # нужно порезать календарный фонд на те машины, которые есть в простоях
-  # список машин который остался в простоях после фильтрации
-  eo_list_in_maintanance_jobs_df = maintanance_jobs_full_df['eo_code'].unique()
+  # список машин который остался в простоях после фильтрации по бизнес-единицу, вышестоящему месту и ЕО
+  # ниже maintanance_jobs_df ббудет порезан на категории работ. при этом это не коснется выборки по календарному фонду
+  eo_list_in_maintanance_jobs_df = maintanance_jobs_df['eo_code'].unique()
 
   eo_calendar_fond = eo_calendar_fond.copy()
   eo_calendar_fond = eo_calendar_fond.loc[eo_calendar_fond['eo_code'].isin(eo_list_in_maintanance_jobs_df)]
-  eo_calendar_fond_full = eo_calendar_fond
-  
+  # eo_calendar_fond_full = eo_calendar_fond
+
   # список ЕО, на которые есть календарный фонд
-  eo_cal_fond = pd.DataFrame(eo_calendar_fond['eo_code'].unique(), columns = ['eo_code'], dtype = str)
+  # eo_cal_fond = pd.DataFrame(eo_calendar_fond['eo_code'].unique(), columns = ['eo_code'], dtype = str)
   # список ЕО, на которые есть расчет простоев
-  eo_downtime = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'], dtype = str)
+  # eo_downtime = pd.DataFrame(maintanance_jobs_df['eo_code'].unique(), columns = ['eo_code'], dtype = str)
   # делаем пересечение этих списков.
-  eo_for_ktg = pd.merge(eo_cal_fond, eo_downtime, on = 'eo_code', how = 'inner')['eo_code'].unique()
+  # eo_for_ktg = pd.merge(eo_cal_fond, eo_downtime, on = 'eo_code', how = 'inner')['eo_code'].unique()
 
   # режем датафрейм с простоями по eo_for_ktg
-  maintanance_jobs_df = maintanance_jobs_df.copy()
+  # maintanance_jobs_df = maintanance_jobs_df.copy()
   
-  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
+  # maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
   
   
   # режем датафрейм с календарным фондом  по eo_for_ktg
-  maintanance_jobs_df = maintanance_jobs_df.copy()
-  maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
+  # maintanance_jobs_df = maintanance_jobs_df.copy()
+  # maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_for_ktg)]
 
-  
 
   ############# PIECHART ПРОСТОИ ПО КАТЕГОРИЯМ #####################
   
@@ -247,98 +244,6 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
     template=graph_template,
     )
   
-  ################# График КТГ по месяцам ###############################
-  maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
-  eo_calendar_fond_full['year'] = eo_calendar_fond_full['datetime'].dt.year
-  maintanance_jobs_df['month'] = maintanance_jobs_df['maintanance_datetime'].dt.month
-  maintanance_jobs_df['month_year'] = maintanance_jobs_df['month'].astype('str') + "_"+ maintanance_jobs_df['year'].astype('str')
-  eo_calendar_fond['month'] = eo_calendar_fond['datetime'].dt.month
-  eo_calendar_fond['month_year'] = eo_calendar_fond['month'].astype('str')  + "_" + eo_calendar_fond['year'].astype('str')
-
-  x_month_year = ['1_2023','2_2023','3_2023','4_2023','5_2023','6_2023','7_2023','8_2023','9_2023','10_2023','11_2023','12_2023','1_2024','2_2024','3_2024','4_2024','5_2024','6_2024','7_2024','8_2024','9_2024','10_2024','11_2024','12_2024','1_2025','2_2025','3_2025','4_2025','5_2025','6_2025','7_2025','8_2025','9_2025','10_2025','11_2025','12_2025']
-  y_ktg_month_year = []
-  text_list_month_year = []
-  for month_year in x_month_year:
-    downtime_month_year_df = maintanance_jobs_df.loc[maintanance_jobs_df['month_year']== month_year]
-   
-    downtime_month_year = downtime_month_year_df['dowtime_plan, hours'].sum()
-    
-    calendar_fond_month_year_df = eo_calendar_fond.loc[eo_calendar_fond['month_year'] == month_year]
-    calendar_fond_month_year = calendar_fond_month_year_df['calendar_fond'].sum()
-
-    ktg_month_year = (calendar_fond_month_year - downtime_month_year) / calendar_fond_month_year
-
-    text = round(ktg_month_year, 2)
-    text_list_month_year.append(text)
-    y_ktg_month_year.append(ktg_month_year)
-    
-  fig_ktg_by_month = go.Figure()
-  fig_ktg_by_month.add_trace(go.Bar(
-  name="КТГ",
-  x=x_month_year, 
-  y=y_ktg_month_year,
-  # xperiodalignment="middle",
-  textposition='auto'
-  ))
-  fig_ktg_by_month.update_xaxes(type='category')
-  fig_ktg_by_month.update_yaxes(range = [0,1])  
-  fig_ktg_by_month.update_layout(
-    title_text='КТГ по месяцам за три года 2023-2025',
-    template=graph_template,
-    )
-  fig_ktg_by_month.update_traces(
-    text = text_list_month_year,
-    textposition='auto'
-  )
-
-
-  ################# График КТГ по неделям 2023 ###############################
-  maintanance_jobs_df_2023 = maintanance_jobs_df.loc[maintanance_jobs_df['year']==2023]
-  maintanance_jobs_df_2023 = maintanance_jobs_df_2023.copy()
-  maintanance_jobs_df_2023['week'] = maintanance_jobs_df_2023['maintanance_datetime'].dt.isocalendar().week
-  
-  eo_calendar_fond = eo_calendar_fond.copy()
-  eo_calendar_fond['week'] = eo_calendar_fond['datetime'].dt.isocalendar().week
-  eo_calendar_fond_2023 = eo_calendar_fond.loc[eo_calendar_fond['year']==2023]
-
-
-  x_week = []
-  for i in range(1,53):
-    x_week.append(i)
-  
-  y_ktg_2023_week = []
-  text_ktg_2023_week = []
-  for week in x_week:
-    downtime_2023_week_df = maintanance_jobs_df_2023.loc[maintanance_jobs_df_2023['week']== week]
-    
-    downtime_2023_week = downtime_2023_week_df['dowtime_plan, hours'].sum()
-    eo_calendar_fond_week_df = eo_calendar_fond_2023.loc[eo_calendar_fond_2023['week'] == week]
-    eo_calendar_fond_week = eo_calendar_fond_week_df['calendar_fond'].sum()
-
-    ktg_week = (eo_calendar_fond_week - downtime_2023_week) / eo_calendar_fond_week
-
-    text = round(ktg_week, 2)
-    text_ktg_2023_week.append(text)
-    y_ktg_2023_week.append(ktg_week)
-    
-  fig_ktg_by_weeks = go.Figure()
-  fig_ktg_by_weeks.add_trace(go.Bar(
-  name="КТГ по неделям 2023",
-  x=x_week, 
-  y=y_ktg_2023_week,
-  # xperiodalignment="middle",
-  textposition='auto'
-  ))
-  fig_ktg_by_weeks.update_xaxes(type='category')
-  fig_ktg_by_weeks.update_yaxes(range = [0,1])  
-  fig_ktg_by_weeks.update_layout(
-    title_text='КТГ по неделям 2023',
-    template=graph_template,
-    )
-  fig_ktg_by_weeks.update_traces(
-    text = text_ktg_2023_week,
-    textposition='auto'
-  )
 
   ###################### данные для селектов фильтров по _main_eo_class ################
   checklist_main_eo_class_value  = []
@@ -353,8 +258,8 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
     eo_list_value = checklist_eo
   eo_list_options = functions.eo_checklist_data(maintanance_jobs_full_for_eo_filter_df)[0]
 
-  #### чек-лист для фильтра по типам работ ##################
-  maintanance_category_checklist_data = functions.maintanance_category_filter(maintanance_jobs_df)[0]
+  ############## чек-лист для фильтра по типам работ ##################
+  maintanance_category_checklist_data = functions.maintanance_category_filter(maintanance_jobs_full_df)[0]
     
   # maintanance_category_checklist - из инпута функции. Значение в селектах
   # если в чек-листе что-то выбрано, то значения равны выбору
@@ -380,6 +285,7 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
       maint_category_list = []
   # eo_filter_list - фильтр по машинам  
   # level_upper_filter_list - фильтр по Вышестоящему техместу
+  maintanance_jobs_df_before_cut_by_maint_categories = maintanance_jobs_df
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_filter_list) &
   maintanance_jobs_df['level_upper'].isin(level_upper_filter_list) &
   maintanance_jobs_df['maintanance_category_id'].isin(maint_category_list)
@@ -399,58 +305,33 @@ def maintanance(select_all_managers_button_tab_plan_fact, release_all_maintananc
   downtime_2023 = int(maintanance_jobs_df.loc[maintanance_jobs_df['year'] == 2023]['dowtime_plan, hours'].sum())
 
   downtime_2023 = 'Общий простой ,час: {}'.format(downtime_2023)
-  
+
+  eo_calendar_fond['year'] = eo_calendar_fond['datetime'].dt.year
   cal_fond_2023_sum = int(eo_calendar_fond.loc[eo_calendar_fond['year']==2023]['calendar_fond'].sum())
 
   cal_fond_2023 = 'Общий календарный фонд ,час: {}'.format(cal_fond_2023_sum)
 
-
+  ################# ГРАФИК С ПРОСТОЯМИ ЗА 3 ГОДА #######################################
   fig_downtime = fig_downtime_by_years.fig_downtime_by_years(maintanance_jobs_df, theme_selector)
-  fig_ktg_by_yrs = fig_ktg_by_years.fig_ktg_by_years(maintanance_jobs_df, theme_selector, eo_calendar_fond_full)
+
+  ################# ГРАФИК КТГ ПО МЕСЯЦАМ ЗА ТРИ ГОДА ##################################
+  fig_ktg_3y_by_months = fig_planned_3y_ktg.fig_downtime_planned_3y_ktg(maintanance_jobs_df, eo_calendar_fond, theme_selector)
+  print(type(fig_ktg_3y_by_months))
   
+  ################ ГРАФИК КТГ ПО ГОДАМ ЗА 3 ГОДА #######################################
+  fig_ktg_by_yrs = fig_ktg_by_years.fig_ktg_by_years(maintanance_jobs_df, theme_selector, eo_calendar_fond)
+
   
   new_loading_style = loading_style
 
   # подготовка файла для выгрузки excel с простоями
   fig_table_maintanance.fig_table_maintanance(maintanance_jobs_df)
-  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_yrs, fig_ktg_by_month, fig_ktg_by_weeks,  new_loading_style
+  
+  return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_yrs, fig_ktg_3y_by_months, new_loading_style
 
+  
 
 ########## Настройки################
-## обновляем дефолтную дату начала работ
-# читаем файл с дефолтными значениями
-# Opening JSON file
-with open('default_values.json', 'r') as openfile:
-  # Reading from json file
-  default_values_dict = json.load(openfile)
-
-default_to_start_date = default_values_dict['default_to_start_date']
-
-default_to_start_date = datetime.datetime.strptime(default_to_start_date, '%Y-%m-%d')
-
-@app.callback([
-    Output('output-container-date-picker-single', 'children'),
-    Output('default_maintanance_start_date_picker', 'date')
-    ],
-    Input('default_maintanance_start_date_picker', 'date'))
-def update_output(date_value):
-    
-    string_prefix = 'Выбрана дата: '
-    datapicker_value = default_to_start_date.date()
-    text = ""
-    if date_value is not None:
-      default_values_dict['default_to_start_date'] = date_value
-      
-      # записываем в json
-      with open("default_values.json", "w") as jsonFile:
-        json.dump(default_values_dict, jsonFile)
-      date_object = datetime.date.fromisoformat(date_value)
-      date_string = date_object.strftime('%d.%m.%Y')
-      text = string_prefix + date_string
-      datapicker_value = date_value
-    
-    return text, datapicker_value 
-
 
 
 
