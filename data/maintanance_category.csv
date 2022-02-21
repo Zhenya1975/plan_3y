@@ -1,13 +1,31 @@
 ,maintanance_category_id,maintanance_name
 0,eto,ЕТО
-1,to500,ТО-500
-2,to1000,ТО-1000
-3,to2000,ТО-2000
-4,to4000,ТО-4000
-5,to6000,ТО-6000
-6,to12000,ТО-12000
-7,to_suppl_systems,ТО доп систем
-8,tr,ТР
-9,tr_suppl_systems,Трдоп.сист.
-10,tr_middle,Трсред
-11,overhaul_total,КР
+1,to250,ТО1-250
+2,to500,ТО2-500
+3,to1000,ТО3-1000
+4,to2000,ТО4-2000
+5,to5000,ТО5-5000
+6,tr,ТР
+7,eng_overhaul,Кдвс (Замена)
+8,trans_overhaul,Ккпп (Замена)
+9,diff_overhaul,Кгп (Замена)
+10,fd_overhaul,Кбп
+11,tr_hs,ТР ГС
+12,tr_dpf,ТР Демпфер
+13,tr_susp,ТР Подвески
+14,lining_partitial,СВч (частичная футеровка)
+15,lining_full,СВп (полная футеровка)
+16,to1500,ТО4-1500
+17,to2500,ТО6-2500
+18,to4000,ТО7-4000
+19,to8000,ТО9-8000
+20,to10000,ТО10-10000
+21,gen_overhaul,Кген(Замена)
+22,kmk_overhaul,Кмк (Замена)
+23,tr_mo,ТРмо (Замена)
+24,to6000,ТО-6000
+25,to12000,ТО-12000
+26,to_suppl_systems,ТО доп систем
+27,tr_suppl_systems,Трдоп.сист.
+28,tr_middle,Трсред
+29,overhaul_total,КР
