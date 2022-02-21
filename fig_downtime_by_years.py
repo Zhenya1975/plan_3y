@@ -51,7 +51,7 @@ def fig_downtime_by_years(maintanance_jobs_df, theme_selector):
   #downtime_y = maintanance_jobs_df['dowtime_plan, hours']
   #dates_x = maintanance_jobs_df['maintanance_datetime']
   if theme_selector:
-      graph_template = 'sandstone'
+      graph_template = 'seaborn'
   # bootstrap
 
   else:
@@ -72,7 +72,7 @@ def fig_downtime_by_years(maintanance_jobs_df, theme_selector):
   # fig_downtime.add_vline(x=new_year_2023_2024, line_width=3, line_color="green")
 
   fig_downtime.update_xaxes(
-    # showgrid=True, 
+    showgrid=False, 
     # ticklabelmode="period"
   )
   fig_downtime.update_traces(

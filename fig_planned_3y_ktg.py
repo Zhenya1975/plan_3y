@@ -66,7 +66,7 @@ def fig_downtime_planned_3y_ktg(maintanance_jobs_df, eo_calendar_fond, theme_sel
   #downtime_y = maintanance_jobs_df['dowtime_plan, hours']
   #dates_x = maintanance_jobs_df['maintanance_datetime']
   if theme_selector:
-      graph_template = 'sandstone'
+      graph_template = 'seaborn'
   else:
       graph_template = 'plotly_dark'
   
@@ -78,7 +78,7 @@ def fig_downtime_planned_3y_ktg(maintanance_jobs_df, eo_calendar_fond, theme_sel
   # xperiodalignment="middle",
   # textposition='auto'
   ))
-  fig_ktg_by_month.update_xaxes(type='category')
+  fig_ktg_by_month.update_xaxes(type='category', showgrid=False,)
   fig_ktg_by_month.update_yaxes(range = [0,1])  
   fig_ktg_by_month.update_layout(
     title_text='КТГ по месяцам за три года 2023-2025',
@@ -89,5 +89,3 @@ def fig_downtime_planned_3y_ktg(maintanance_jobs_df, eo_calendar_fond, theme_sel
     textposition='auto'
   )
   return fig_ktg_by_month
-
- 

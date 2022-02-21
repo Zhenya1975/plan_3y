@@ -24,7 +24,8 @@ templates = [
     "vapor",
     "sandstone"
 ]
-
+available_graph_templates: ['ggplot2', 'seaborn', 'simple_white', 'plotly', 'plotly_white', 'plotly_dark',
+                            'presentation', 'xgridoff', 'ygridoff', 'gridon', 'none']
 load_figure_template(templates)
 
 dbc_css = (
@@ -39,12 +40,21 @@ def fig_piechart_downtime_by_categories(maintanance_jobs_df, theme_selector):
   labels = list(maint_categ['maintanance_category_id'])
   values = list(maint_categ['dowtime_plan, hours'])
   if theme_selector:
-      graph_template = 'sandstone'
+      graph_template = 'seaborn'
   else:
       graph_template = 'plotly_dark'
   planned_downtime_piechart = go.Figure(data=[go.Pie(labels=labels, values=values)])
+  # planned_downtime_piechart.update_traces(textposition='inside')
   planned_downtime_piechart.update_layout(
+    # margin=dict(t=0, b=0, l=0, r=0),
     title_text='Простой по видам работ',
-    template=graph_template,
+    # template=graph_template,
+    # uniformtext_minsize=12, uniformtext_mode='hide',
+    legend = dict(
+                # font=dict(color='#7f7f7f'), 
+                # orientation="h", # Looks much better horizontal than vertical
+                # y=0.6,
+                x = 1.6
+            ),
     )
   return planned_downtime_piechart
