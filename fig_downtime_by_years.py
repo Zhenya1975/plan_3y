@@ -35,8 +35,7 @@ dbc_css = (
 def fig_downtime_by_years(maintanance_jobs_df, theme_selector):
   
   # строим диаграмму по категориям, где категории - это виды работ. И отсортируем их еще по месяцам
-  maintanance_jobs_df['month'] = maintanance_jobs_df['maintanance_datetime'].dt.month
-  maintanance_jobs_df['month_year'] = maintanance_jobs_df['month'].astype('str') + "_"+ maintanance_jobs_df['year'].astype('str')
+ 
   
   x_month_year = ['1_2023','2_2023','3_2023','4_2023','5_2023','6_2023','7_2023','8_2023','9_2023','10_2023','11_2023','12_2023','1_2024','2_2024','3_2024','4_2024','5_2024','6_2024','7_2024','8_2024','9_2024','10_2024','11_2024','12_2024','1_2025','2_2025','3_2025','4_2025','5_2025','6_2025','7_2025','8_2025','9_2025','10_2025','11_2025','12_2025']
   y_downtime = []

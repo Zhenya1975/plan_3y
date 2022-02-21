@@ -200,7 +200,10 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['level_upper'].isin(level_upper_filter_list)&
   maintanance_jobs_df['eo_code'].isin(eo_filter_list)
   ]
-    
+  maintanance_jobs_df_before_maintanance_category_filter = maintanance_jobs_df
+  
+  maintanance_jobs_df_before_maintanance_category_filter.to_csv('data/maintanance_jobs_df_before_maintanance_category_filter_delete.csv')
+  
   # читаем календарный фонд
   eo_calendar_fond = pd.read_csv('data/eo_calendar_fond.csv', dtype = str)
   eo_calendar_fond = eo_calendar_fond.astype({'calendar_fond': float})
@@ -274,14 +277,34 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
     print('нажата кнопка Снять выбор')  
     maint_category_list_value = []
     maint_category_list = []
+  # print( maintanance_jobs_df.info())
+  maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
+  maintanance_jobs_df['month'] = maintanance_jobs_df['maintanance_datetime'].dt.month
+  maintanance_jobs_df['month_year'] = maintanance_jobs_df['month'].astype('str') + "_"+ maintanance_jobs_df['year'].astype('str')
+
+    
   # eo_filter_list - фильтр по машинам  
   # level_upper_filter_list - фильтр по Вышестоящему техместу
+  level_upper = pd.read_csv('data/level_upper.csv')
+  
+  # джойним с level_upper
+  maintanance_jobs_df = pd.merge(maintanance_jobs_df, level_upper, on = 'level_upper', how = 'left')
+  # создаем поле-ключ teh-mesto-month-year 
+  maintanance_jobs_df['teh_mesto_month_year'] = maintanance_jobs_df['level_upper'] + '_' + maintanance_jobs_df['month_year']
+  
+ 
+  maintanance_jobs_df.to_csv('data/maintanance_jobs_df_before_ktg_model.csv')
+  maintanance_jobs__for_zero_dowtime = maintanance_jobs_df.loc[:, ['teh_mesto_month_year', 'level_upper', 'Название технического места', 'month_year', 'year']]
+  maintanance_jobs__for_zero_dowtime['dowtime_plan, hours'] = 0
+  maintanance_jobs__for_zero_dowtime_groupped = maintanance_jobs__for_zero_dowtime.groupby(['teh_mesto_month_year', 'level_upper', 'Название технического места', 'month_year', 'year'], as_index=False)['dowtime_plan, hours'].sum()
+  maintanance_jobs__for_zero_dowtime_groupped.to_csv('data/maintanance_jobs__for_zero_dowtime_groupped_delete.csv')
   
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_filter_list) &
   maintanance_jobs_df['level_upper'].isin(level_upper_filter_list) &
   maintanance_jobs_df['maintanance_category_id'].isin(maint_category_list)
   ]
-  print('maintanance_jobs_df', len(maintanance_jobs_df))
+  
+
   maint_category_list_options = maintanance_category_checklist_data
 
   ######################## титульный текст из КАКИХ БЕ машины в выборке #######################
@@ -324,23 +347,18 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
   fig_table_maintanance.fig_table_maintanance(maintanance_jobs_df)
 
   # выполнение скрипта подготовки таблицы ктг-месяц-модель-машины
-  ktg_df = ktg_by_month_models.ktg_by_month_models(maintanance_jobs_df, eo_calendar_fond, 2023)
+  
+  ktg_df = ktg_by_month_models.ktg_by_month_models(maintanance_jobs_df, eo_calendar_fond, maintanance_jobs__for_zero_dowtime_groupped, 2023)
+  
+
   ktg_by_month_table = ktg_table_html.ktg_table(ktg_df)
+
+
   
   return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_yrs, fig_ktg_3y_by_months, new_loading_style, ktg_by_month_table
 
 ########## Настройки################
 
-@app.callback(
-    Output("download_template", "data"),
-    Input("btn_download_template", "n_clicks"),
-    prevent_initial_call=True,
-)
-def func_1(n_clicks):
-    if n_clicks:
-        df = pd.read_csv('data/selected_items.csv', dtype=str)
-        df = df.astype({'level_no': int})
-        return dcc.send_data_frame(df.to_excel, "шаблон фильтров.xlsx", index=False, sheet_name="шаблон фильтров")
 
 
 def parse_contents(contents, filename):
@@ -366,11 +384,11 @@ def parse_contents(contents, filename):
                 continue
               else:
                 control_value = 0
-                print('column:', column)
+          
                 break
-            print('control_value = ', control_value)
+     
             if control_value == 1:
-              print('все колонки на месте')
+       
               df.to_csv('data/maintanance_job_list_general.csv')
               functions.pass_interval_fill()
               functions.maintanance_category_prep()
@@ -498,4 +516,4 @@ def funct(n_clicks_ktg_table):
 
 if __name__ == "__main__":
     # app.run_server(debug=True)
-    app.run_server(host='0.0.0.0', debug=False)
+    app.run_server(host='0.0.0.0', debug=True)
