@@ -14,6 +14,16 @@ def settings_tab():
             dbc.Row([
                 dbc.Col(
                     children=[
+                      html.Div([
+                            html.P(),          
+                 
+                            dbc.Button("Выгрузить eo_list.xlsx", id="btn_download_eo_list", size="sm",
+                                       style={'marginBottom': '3px',
+                                              'marginTop': '3px',
+                                              'backgroundColor': '#232632'}, ),
+                            dcc.Download(id="download_eo_list")
+                        ]
+                              ),
 
                         
                         html.Div([

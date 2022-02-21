@@ -67,14 +67,13 @@ Layout
 """
 
 tabs_styles = {
-    'height': '44px'
+    'height': '34px'
 }
 
 
 
 app.layout = dbc.Container(
-    dbc.Row(
-        [
+    dbc.Row(        [
             dbc.Col(
                 [
                     html.H4("КТГ 2023-2025"),
@@ -110,7 +109,8 @@ app.layout = dbc.Container(
         ]
     ),
     className="m-4 dbc",
-    # fluid=True,
+    fluid=True,
+    
 )
 
 
@@ -411,8 +411,36 @@ def parse_contents(contents, filename):
             functions.maintanance_jobs_df_prepare()
         
             updated_eo_maintanance_job_code_last_date.to_csv('data/eo_maintanance_job_code_last_date.csv')
-            
-            
+
+        # загружаем список eo - в ответ получаем список для перепроверки даты ввода в эксплуатацию, даты списания, среднесуточной наработки
+        elif 'xlsx' in filename and "eo_request_data" in filename:
+          # Assume that the user uploaded an excel file
+          df_eo_request_list = pd.read_excel(io.BytesIO(decoded), dtype=str)
+          # объединяем с full_eo_list
+          eo_list = pd.read_csv('data/full_eo_list_actual.csv', dtype=str)
+          eo_list_data = pd.merge(df_eo_request_list, eo_list, on = 'eo_code', how = 'left')
+          # объединяем с level_1
+          level_1 = pd.read_csv('data/level_1.csv')
+          eo_list_data = pd.merge(eo_list_data, level_1, on = 'level_1', how = 'left')
+          # объединяем с level_upper
+          level_upper = pd.read_csv('data/level_upper.csv', dtype=str)
+          eo_list_data = pd.merge(eo_list_data, level_upper, on = 'level_upper', how = 'left')
+          # объединяем с level_2
+          level_2 = pd.read_csv('data/level_2_list.csv', dtype=str)
+          eo_list_data = pd.merge(eo_list_data, level_2, on = 'level_2_path', how = 'left')
+          date_columns = ["operation_start_date", "operation_finish_date"]
+          # Колонку со строкой - в дату
+          for column in date_columns:
+            eo_list_data[column] =  eo_list_data[column].astype("datetime64[ns]")
+            # колонку  с datetime - в строку
+            eo_list_data[column] = eo_list_data[column].dt.strftime("%d.%m.%Y")
+          
+          eo_list_data = eo_list_data.loc[:, ['level_1_description', 'Название технического места', 'eo_code', 'eo_description', 'mvz', 'level_2_description', 'operation_start_date','operation_finish_date', 'avearage_day_operation_hours']]
+          eo_list_data.to_csv('data/eo_list_data_temp.csv', index = False)
+          
+          # print(df_eo_request_list)
+          df = df_eo_request_list
+          
     except Exception as e:
         print(e)
         return html.Div([
@@ -460,7 +488,44 @@ def update_output_(list_of_contents, list_of_names):
         
         return children
 
+######################## ОБРАБОТЧИК ВЫГГРУЗКИ EO_LIST #####################################
+@app.callback(
+    Output("download_eo_list", "data"),
+    Input("btn_download_eo_list", "n_clicks"),
+    prevent_initial_call=True,
+)
+def download_eo_list(n_clicks):
+  if n_clicks:
+    eo_list = pd.read_csv('data/full_eo_list.csv', dtype=str)
+    # объединяем с level_1
+    level_1 = pd.read_csv('data/level_1.csv')
+    eo_list_upload = pd.merge(eo_list, level_1, on = 'level_1', how = 'left')
+    # объединяем с level_upper
+    level_upper = pd.read_csv('data/level_upper.csv', dtype=str)
+    eo_list_upload = pd.merge(eo_list_upload, level_upper, on = 'level_upper', how = 'left')
+    # объединяем с level_2
+    level_2 = pd.read_csv('data/level_2_list.csv', dtype=str)
+    eo_list_upload = pd.merge(eo_list_upload, level_2, on = 'level_2_path', how = 'left')
+    date_columns = ["operation_start_date", "operation_finish_date"]
+    # Колонку со строкой - в дату
+    for column in date_columns:
+      eo_list_upload[column] =  eo_list_upload[column].astype("datetime64[ns]")
+      # колонку  с datetime - в строку
+      eo_list_upload[column] = eo_list_upload[column].dt.strftime("%d.%m.%Y")
+    
+    eo_list_upload = eo_list_upload.loc[:, ['level_1_description', 'Название технического места', 'eo_code', 'eo_description', 'mvz', 'level_2_description', 'operation_start_date','operation_finish_date', 'avearage_day_operation_hours']]
+    eo_list_upload.to_csv('data/eo_list_upload_delete.csv', index = False)
+    
+    #  df = df.loc[:, ['maintanance_code_id', 'maintanance_code',	'maintanance_category_id','maintanance_name',	'upper_level_tehmesto_code',	'upper_level_tehmesto_description',	'interval_motohours',	'downtime_planned','pass_interval',	'source']]
 
+    # eo_list_upload = eo_list_upload.astype({'downtime_planned': float, 'interval_motohours': float})
+    return dcc.send_data_frame(eo_list_upload.to_excel, "eo_data.xlsx", index=False, sheet_name="eo_data")
+
+
+#########################      
+
+
+      
 # обработчик выгрузки "Выгрузить maintanance_job_list_general"
 @app.callback(
     Output("download_maintanance_job_list_general", "data"),
@@ -484,11 +549,9 @@ def download_maintanance_job_list_general(n_clicks):
 )
 def download_eo_job_catologue(n_clicks):
     if n_clicks:
-      df_catalogue = pd.read_csv('data/eo_job_catologue.csv', dtype=str)
-      df_dates = pd.read_csv('data/eo_maintanance_job_code_last_date.csv', dtype = str)
-      df = pd.merge(df_catalogue, df_dates, on = 'eo_maintanance_job_code', how = 'left')
-      # df = df.astype({'level_no': int})
-      return dcc.send_data_frame(df.to_excel, "eo_job_catologue.xlsx", index=False, sheet_name="eo_job_catologue")
+      eo_job_catologue_df = pd.read_csv('data/eo_job_catologue.csv', dtype=str)
+
+      return dcc.send_data_frame(eo_job_catologue_df.to_excel, "eo_job_catologue.xlsx", index=False, sheet_name="eo_job_catologue")
 
 # Обработчик кнопки выгрузки в эксель таблицы с простоями
 @app.callback(
