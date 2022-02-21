@@ -21,7 +21,7 @@ def maintanance_chart_tab():
                     html.P(),
                     html.Div([
                       "Бизнес единица",
-                      dcc.Dropdown(id="checklist_level_1", multi=True),
+                      dcc.Dropdown(id="checklist_level_1", multi=True, optionHeight = 50),
                   ]),
 
 
@@ -35,7 +35,7 @@ def maintanance_chart_tab():
                   html.P(),
                     html.Div([
                       "ЕО",
-                      dcc.Dropdown(id="checklist_eo", multi=True),
+                      dcc.Dropdown(id="checklist_eo", multi=True, optionHeight = 50),
                   ]),
                     html.Hr(),
                     html.P('Категории работ'),
