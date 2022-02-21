@@ -201,8 +201,7 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
   maintanance_jobs_df['eo_code'].isin(eo_filter_list)
   ]
   maintanance_jobs_df_before_maintanance_category_filter = maintanance_jobs_df
-  
-  maintanance_jobs_df_before_maintanance_category_filter.to_csv('data/maintanance_jobs_df_before_maintanance_category_filter_delete.csv')
+
   
   # читаем календарный фонд
   eo_calendar_fond = pd.read_csv('data/eo_calendar_fond.csv', dtype = str)
@@ -274,10 +273,10 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
     maint_category_list_value = functions.maintanance_category_filter(maintanance_jobs_full_df)[1]
     maint_category_list = functions.maintanance_category_filter(maintanance_jobs_full_df)[1]
   elif id_release_all_maintanance_category in changed_id:
-    print('нажата кнопка Снять выбор')  
+ 
     maint_category_list_value = []
     maint_category_list = []
-  # print( maintanance_jobs_df.info())
+
   maintanance_jobs_df['year'] = maintanance_jobs_df['maintanance_datetime'].dt.year
   maintanance_jobs_df['month'] = maintanance_jobs_df['maintanance_datetime'].dt.month
   maintanance_jobs_df['month_year'] = maintanance_jobs_df['month'].astype('str') + "_"+ maintanance_jobs_df['year'].astype('str')
@@ -292,12 +291,9 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
   # создаем поле-ключ teh-mesto-month-year 
   maintanance_jobs_df['teh_mesto_month_year'] = maintanance_jobs_df['level_upper'] + '_' + maintanance_jobs_df['month_year']
   
- 
-  maintanance_jobs_df.to_csv('data/maintanance_jobs_df_before_ktg_model.csv')
   maintanance_jobs__for_zero_dowtime = maintanance_jobs_df.loc[:, ['teh_mesto_month_year', 'level_upper', 'Название технического места', 'month_year', 'year']]
   maintanance_jobs__for_zero_dowtime['dowtime_plan, hours'] = 0
   maintanance_jobs__for_zero_dowtime_groupped = maintanance_jobs__for_zero_dowtime.groupby(['teh_mesto_month_year', 'level_upper', 'Название технического места', 'month_year', 'year'], as_index=False)['dowtime_plan, hours'].sum()
-  maintanance_jobs__for_zero_dowtime_groupped.to_csv('data/maintanance_jobs__for_zero_dowtime_groupped_delete.csv')
   
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['eo_code'].isin(eo_filter_list) &
   maintanance_jobs_df['level_upper'].isin(level_upper_filter_list) &
