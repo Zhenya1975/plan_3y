@@ -12,7 +12,7 @@ def maintanance_chart_tab():
            
           dcc.Loading(id='loading', parent_style=loading_style),
             
-            
+            html.Div(
             dbc.Row([
                 # колонка с фильтрами
                 dbc.Col(width=2,
@@ -200,6 +200,7 @@ def maintanance_chart_tab():
                     ]),
                 
             ]),
+            )
             #dbc.Row([
                 
             #]),

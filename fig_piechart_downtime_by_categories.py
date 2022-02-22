@@ -47,8 +47,11 @@ def fig_piechart_downtime_by_categories(maintanance_jobs_df, theme_selector):
   # planned_downtime_piechart.update_traces(textposition='inside')
   planned_downtime_piechart.update_layout(
     # margin=dict(t=0, b=0, l=0, r=0),
+    autosize=False,
+    width=500,
+    height=500,
     title_text='Простой по видам работ',
-    # template=graph_template,
+    template=graph_template,
     # uniformtext_minsize=12, uniformtext_mode='hide',
     legend = dict(
                 # font=dict(color='#7f7f7f'), 
