@@ -91,6 +91,16 @@ def maintanance_category_prep():
   df_result.to_csv('data/maintanance_category.csv')
 maintanance_category_prep()  
 
+def select_eo_for_calculation():
+  full_eo_list_actual_df = pd.read_csv('data/full_eo_list_actual.csv', dtype = str)
+  strategy_list_df = pd.read_csv('data/strategy_list.csv', dtype = str)
+  strategy_list = strategy_list_df['strategy_id'].unique()
+  eo_list_for_calculation = full_eo_list_actual_df.loc[full_eo_list_actual_df['strategy_id'].isin(strategy_list)]
+  eo_list_for_calculation.to_csv('data/full_eo_list.csv', index = False)
+select_eo_for_calculation()
+
+
+
 # справочник работ eo_job_catologue
 def eo_job_catologue():
   '''создание файла eo_job_catologue: список оборудование - работа на оборудовании'''
@@ -98,8 +108,9 @@ def eo_job_catologue():
   maintanance_job_list_general_df = pd.read_csv('data/maintanance_job_list_general.csv', dtype = str)
   maintanance_job_list_general_df = maintanance_job_list_general_df.astype({'downtime_planned': float})
   maintanance_job_list_general_df.rename(columns={'upper_level_tehmesto_code': 'level_upper'}, inplace=True)
-  eo_maintanance_plan_df = pd.merge(full_eo_list, maintanance_job_list_general_df, on = 'level_upper', how='inner')
+  eo_maintanance_plan_df = pd.merge(full_eo_list, maintanance_job_list_general_df, on = 'strategy_id', how='inner')
   
+  # eo_maintanance_plan_df.to_csv('data/eo_maintanance_plan_df_delete.csv')
   # удаляем строки, в которых нет данных в колонке eo_main_class_code
   eo_maintanance_plan_df = eo_maintanance_plan_df.loc[eo_maintanance_plan_df['eo_main_class_code'] != 'no_data']
 
@@ -108,8 +119,8 @@ def eo_job_catologue():
   eo_maintanance_plan_df = eo_maintanance_plan_df.loc[eo_maintanance_plan_df['check_S_eo_class_code'] != 'S']
   
   eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code_id']
-  eo_maintanance_plan_df['last_maintanance_date'] = initial_values.last_maintanance_date
-  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_category_id', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','go_interval', 'operation_start_date', 'last_maintanance_date']].reset_index(drop=True)
+
+  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','strategy_id', 'maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_category_id', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','go_interval', 'operation_start_date']].reset_index(drop=True)
   eo_job_catologue = eo_maintanance_plan_df
   eo_job_catologue.to_csv('data/eo_job_catologue.csv', index=False)
 
@@ -158,9 +169,12 @@ def maintanance_jobs_df_prepare():
   full_eo_list_selected = full_eo_list.loc[:, ['eo_code', 'avearage_day_operation_hours']]
   # джойним с full_eo_list
   eo_maint_plan_with_dates_with_full_eo_list = pd.merge(eo_maint_plan, full_eo_list_selected, on = 'eo_code', how = 'left')
-  eo_maint_plan = eo_maint_plan_with_dates_with_full_eo_list
-
-  eo_maint_plan.to_csv('data/eo_maint_plan_delete.csv')
+  
+  # джйоним с файлом last_maint_date - датами старта
+  last_maint_date = pd.read_csv('data/last_maint_date.csv')
+  eo_maint_plan = pd.merge(eo_maint_plan_with_dates_with_full_eo_list, last_maint_date, on = 'eo_maintanance_job_code', how = 'left')
+  
+  # eo_maint_plan.to_csv('data/eo_maint_plan_delete.csv')
   # в maintanance_jobs_result_list будем складывать дикты с записями о сгенерированных ТО-шках.
   maintanance_jobs_result_list = []
 
@@ -294,7 +308,8 @@ def maintanance_jobs_df_prepare():
 
   return maintanance_jobs_df
 maintanance_jobs_df_prepare()
- 
+
+
 
 # заполняем календарный фонд по оборудованию
 # берем машины, кооторые участвуют в файле eo_job_catologue.csv
