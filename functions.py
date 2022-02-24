@@ -15,6 +15,8 @@ first_day_of_selection = initial_values.first_day_of_selection
 last_day_of_selection_date = initial_values.last_day_of_selection
 
 
+
+
 def pass_interval_fill():
   '''создание списка pass interval в maintanance_job_list_general'''
   maintanance_job_list_general = pd.read_csv('data/maintanance_job_list_general.csv')
@@ -109,6 +111,7 @@ def eo_job_catologue():
   maintanance_job_list_general_df = maintanance_job_list_general_df.astype({'downtime_planned': float})
   maintanance_job_list_general_df.rename(columns={'upper_level_tehmesto_code': 'level_upper'}, inplace=True)
   eo_maintanance_plan_df = pd.merge(full_eo_list, maintanance_job_list_general_df, on = 'strategy_id', how='inner')
+
   
   # eo_maintanance_plan_df.to_csv('data/eo_maintanance_plan_df_delete.csv')
   # удаляем строки, в которых нет данных в колонке eo_main_class_code
@@ -120,7 +123,7 @@ def eo_job_catologue():
   
   eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code_id']
 
-  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','strategy_id', 'maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_category_id', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','go_interval', 'operation_start_date']].reset_index(drop=True)
+  eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','strategy_id', 'eo_model_id', 'maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_category_id', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','go_interval', 'operation_start_date']].reset_index(drop=True)
   eo_job_catologue = eo_maintanance_plan_df
   eo_job_catologue.to_csv('data/eo_job_catologue.csv', index=False)
 
@@ -181,6 +184,7 @@ def maintanance_jobs_df_prepare():
   for index, row in eo_maint_plan.iterrows():
     maintanance_job_code = row['eo_maintanance_job_code']
     eo_code = row['eo_code']
+
     standard_interval_motohours = float(row['interval_motohours'])
     plan_downtime = row['downtime_planned']
     start_point = row['last_maintanance_date']
@@ -301,6 +305,10 @@ def maintanance_jobs_df_prepare():
   # режем то, что получилось в период три года
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['maintanance_datetime']>= first_day_of_selection]
   maintanance_jobs_df = maintanance_jobs_df.loc[maintanance_jobs_df['maintanance_datetime']<= last_day_of_selection]
+  
+  ############# прицепляем eo_model_id #############################
+  eo_model_id_eo_list = full_eo_list.loc[:, ['eo_code', 'eo_model_id']]
+  maintanance_jobs_df = pd.merge(maintanance_jobs_df, eo_model_id_eo_list, on='eo_code', how = 'left')
   
   maintanance_jobs_df['maintanance_date'] = maintanance_jobs_df['maintanance_date'].astype(str)
 

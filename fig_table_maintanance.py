@@ -40,6 +40,7 @@ def fig_table_maintanance(maintanance_jobs_df):
   maintanance_jobs_df_temp = maintanance_jobs_df
   # выбираем поля из full_eo_list
   eo_list_df = initial_values.full_eo_list.loc[:, ['eo_code', 'eo_description', 'level_upper', 'operation_start_date', 'avearage_day_operation_hours']]
+
   # джойним maintanance_jobs_df с eo_list
   maintanance_jobs_df_ = pd.merge(maintanance_jobs_df, eo_list_df, on = 'eo_code', how = 'left')
   maintanance_jobs_df = maintanance_jobs_df_

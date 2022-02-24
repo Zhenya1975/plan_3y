@@ -350,9 +350,9 @@ def maintanance(select_all_maintanance_category_checklist, release_all_maintanan
   ktg_df = ktg_by_month_models.ktg_by_month_models(maintanance_jobs_df, eo_calendar_fond, maintanance_jobs__for_zero_dowtime_groupped, 2023)
   
 
+  
   ktg_by_month_table = ktg_table_html.ktg_table(ktg_df)
-
-
+  # ktg_by_month_table = html.Div()
   
   return checklist_main_eo_class_value, checklist_main_eo_class_options, eo_list_value, eo_list_options, maint_category_list_value, maint_category_list_options, be_title, level_upper_title, number_of_eo_title, downtime_2023, cal_fond_2023, fig_downtime, planned_downtime_piechart, fig_ktg_by_yrs, fig_ktg_3y_by_months, new_loading_style, ktg_by_month_table
 
@@ -379,13 +379,14 @@ def coverage_tab(theme_selector):
 
   ########################### общее кол-во моделей ЕО которые должны быть покрыты планом #########################
   # читаем полный список оборудования
-  full_eo_list = pd.read_csv('data/full_eo_list_actual.csv')
+  full_eo_list_actual = pd.read_csv('data/full_eo_list_actual.csv')
+  full_eo_list = pd.read_csv('data/full_eo_list.csv')
   # берем строки, у которых в поле eo_model_id значение не равно no_data
-  total_number_of_models_for_3y_plan = len(full_eo_list.loc[full_eo_list['eo_model_id'] != 'no_data']['eo_model_id'].unique())
+  total_number_of_models_for_3y_plan = len(full_eo_list_actual.loc[full_eo_list_actual['eo_model_id'] != 'no_data']['eo_model_id'].unique())
   total_model_number_of_models_for_3y_plan_string = 'Общее кол-во моделей ЕО для 3-Y плана: {}'.format(total_number_of_models_for_3y_plan)
   
   ########################### кол-во моделей ЕО которые фактически планом #########################
-  number_of_eo_models_with_strategy = len(full_eo_list.loc[full_eo_list['strategy_id'] != 0]['eo_model_id'].unique())
+  number_of_eo_models_with_strategy = len(full_eo_list_actual.loc[full_eo_list_actual['strategy_id'] != 0]['eo_model_id'].unique())
   number_of_eo_models_with_strategy_string = 'Кол-во моделей EO со стратегией: {}'.format(number_of_eo_models_with_strategy)
 
   eo_models_in_plan_pie_chart_fig =   fig_coverage.fig_eo_models_in_plan_pie_chart(total_number_of_models_for_3y_plan,number_of_eo_models_with_strategy, theme_selector)
@@ -393,7 +394,7 @@ def coverage_tab(theme_selector):
   
   
   ########################### общее кол-во ЕО которые должны быть покрыты планом #########################
-  total_number_of_eo_for_3y_plan = len(full_eo_list.loc[full_eo_list['eo_model_id'] != 'no_data']['eo_code'].unique())
+  total_number_of_eo_for_3y_plan = len(full_eo_list_actual.loc[full_eo_list_actual['eo_model_id'] != 'no_data']['eo_code'].unique())
   total_number_of_eo_for_3y_plan_string = 'Общее кол-во ЕО для 3-Y плана: {}'.format(total_number_of_eo_for_3y_plan)
 
   ########################### кол-во ЕО которые фактически покрыты планом #########################
