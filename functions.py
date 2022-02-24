@@ -107,17 +107,35 @@ def eo_job_catologue():
   eo_maintanance_plan_df['check_S_eo_class_code'] = eo_maintanance_plan_df['eo_class_code'].astype(str).str[0]
   eo_maintanance_plan_df = eo_maintanance_plan_df.loc[eo_maintanance_plan_df['check_S_eo_class_code'] != 'S']
   
-
-
   eo_maintanance_plan_df['eo_maintanance_job_code'] = eo_maintanance_plan_df['eo_code'] + '_' + eo_maintanance_plan_df['maintanance_code_id']
   eo_maintanance_plan_df['last_maintanance_date'] = initial_values.last_maintanance_date
   eo_maintanance_plan_df = eo_maintanance_plan_df.loc[:, ['eo_maintanance_job_code','maintanance_code','eo_code', 'eo_main_class_code','eo_description', 'maintanance_category_id', 'maintanance_name', 'interval_motohours','downtime_planned','pass_interval','go_interval', 'operation_start_date', 'last_maintanance_date']].reset_index(drop=True)
-  
- 
-  
+  eo_job_catologue = eo_maintanance_plan_df
+  eo_job_catologue.to_csv('data/eo_job_catologue.csv', index=False)
 
-  eo_maintanance_plan_df.to_csv('data/eo_job_catologue.csv', index=False)
-  return eo_maintanance_plan_df
+  ###################### ОБНОВЛЕНИЕ ДАННЫХ ФАЙЛА С ДАТОЙ СТАРТА РАБОТ. ####################################
+  # если в файле last_maint_date нет строки с кодом eo_код формы, то добавляем строку в файл. Указываем дату по умолчанию 31.12.2022
+  # список кодов в файле last_maint_date
+  last_maint_date = pd.read_csv('data/last_maint_date.csv')
+  last_maint_date_eo_maintanance_job_code_list = last_maint_date['eo_maintanance_job_code'].unique()
+  # список кодов в файле eo_job_catologue
+  eo_job_catologue_eo_maintanance_job_code_list = eo_job_catologue['eo_maintanance_job_code'].unique()
+
+  # итерируемся по eo_job_catologue_eo_maintanance_job_code_list
+  # если значение нет в списке last_maint_date_eo_maintanance_job_code_list то добавляем строку
+  last_maint_date_eo_maintanance_job_code_update = []
+  for eo_maintanance_job_code in eo_job_catologue_eo_maintanance_job_code_list:
+    temp_dict = {}
+    temp_dict['eo_maintanance_job_code'] = eo_maintanance_job_code
+    temp_dict['last_maintanance_date'] = '31.12.2022'
+    if eo_maintanance_job_code not in last_maint_date_eo_maintanance_job_code_list:
+      last_maint_date_eo_maintanance_job_code_update.append(temp_dict)
+  
+  last_maint_date_eo_maintanance_job_code_update_df = pd.DataFrame(last_maint_date_eo_maintanance_job_code_update)
+  last_maint_date_updated_df = pd.concat([last_maint_date, last_maint_date_eo_maintanance_job_code_update_df])
+  last_maint_date_updated_df.to_csv('data/last_maint_date.csv', index = False)
+  
+  return eo_job_catologue
 eo_job_catologue()
 
 
@@ -136,7 +154,7 @@ def maintanance_jobs_df_prepare():
   eo_maint_plan = pd.read_csv('data/eo_job_catologue.csv', dtype = str)
   eo_maint_plan["downtime_planned"] = eo_maint_plan["downtime_planned"].astype('float')
   
-  # выдергиваем из full_eo_list колонки, которые нужны
+  # выдергиваем из full_eo_list 'eo_code', 'avearage_day_operation_hours'
   full_eo_list_selected = full_eo_list.loc[:, ['eo_code', 'avearage_day_operation_hours']]
   # джойним с full_eo_list
   eo_maint_plan_with_dates_with_full_eo_list = pd.merge(eo_maint_plan, full_eo_list_selected, on = 'eo_code', how = 'left')
